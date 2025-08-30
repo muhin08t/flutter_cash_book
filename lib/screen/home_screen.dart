@@ -165,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -188,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -221,7 +221,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.black, width: 1),
                   ),
-                  child: const Center(child: Text("Cell 1")),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // centers vertically
+                    crossAxisAlignment: CrossAxisAlignment.center, // centers horizontally
+                    children: const [
+                      Text("Total Cash In", style: TextStyle(color: Colors.green)),
+                      SizedBox(height: 4), // small spacing
+                      Text("24,000"), // your new text
+                    ],
+                  ),
                 ),
               ),
               Expanded(
@@ -234,7 +242,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       right: BorderSide(color: Colors.black, width: 1),
                     ),
                   ),
-                  child: const Center(child: Text("Cell 2")),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // centers vertically
+                    crossAxisAlignment: CrossAxisAlignment.center, // centers horizontally
+                    children: const [
+                      Text("Total Cash Out", style: TextStyle(color: Colors.red)),
+                      SizedBox(height: 4), // small spacing
+                      Text("32,000"), // your new text
+                    ],
+                  ),
                 ),
               ),
               Expanded(
@@ -247,7 +263,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       right: BorderSide(color: Colors.black, width: 1),
                     ),
                   ),
-                  child: const Center(child: Text("Cell 3")),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // centers vertically
+                    crossAxisAlignment: CrossAxisAlignment.center, // centers horizontally
+                    children: const [
+                      Text("Balance"),
+                      SizedBox(height: 4), // small spacing
+                      Text("55,000"), // your new text
+                    ],
+                  ),
                 ),
               ),
             ],
