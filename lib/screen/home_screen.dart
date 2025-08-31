@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,6 +11,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _selectedCashbook = 'Personal';
   final List<String> _cashbooks = ['Personal', 'Business', 'Savings'];
+  int balance = -55000;
+  final formatter = NumberFormat('#,###');
+  final List<Map<String, dynamic>> transactions = [
+    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
+    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
+    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
+    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
+    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
+    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
+    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
+    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
+    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
+    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
+    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
+    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
+    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
+    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
+    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
+  ];
 
   void _openCashbookDialog() async {
     final result = await showDialog<String>(
@@ -145,13 +165,191 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       // Main content (scrollable if needed)
-      body: SingleChildScrollView(
-        child: Column(
-          children: List.generate(
-            20,
-                (index) => ListTile(title: Text("Item $index")),
+      body: Column(
+        children: [
+          // 👇 Buttons above the ListView
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+             child:  Container(
+              color: Colors.blue.shade100, // 👈 background color here
+              padding: const EdgeInsets.all(8.0), // inner padding for content
+              child: Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
+                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
+                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
+                      ),
+                      child: const Text("All"),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
+                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
+                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
+                      ),
+                      child: const Text("Today"),
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
+                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
+                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
+                      ),
+                      child: const Text("Weekly"),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
+                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
+                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
+                      ),
+                      child: const Text("Single date"),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
+                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
+                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
+                      ),
+                      child: const Text("Monthly"),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
+                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
+                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
+                      ),
+                      child: const Text("Yearly"),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
+                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
+                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
+                      ),
+                      child: const Text("Date range"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+      ),
+
+          // Header row
+          Container(
+            padding: const EdgeInsets.all(8),
+            color: Colors.grey.shade200,
+            child: Row(
+              children: const [
+                Expanded(flex: 2, child: Center(child: Text("Date",  style: TextStyle(color: Colors.black,  fontWeight: FontWeight.bold,)))),
+                Expanded(flex: 1, child: Center(child: Text("Cash In",  style: TextStyle(color: Colors.green)))),
+                Expanded(flex: 1, child: Center(child: Text("Cash Out",  style: TextStyle(color: Colors.red)))),
+              ],
+            ),
           ),
-        ),
+          // ListView for rows
+          Expanded(
+            child: ListView.builder(
+              itemCount: transactions.length,
+              itemBuilder: (context, index) {
+                final t = transactions[index];
+                final dateTime = DateTime.parse(t["date"]);
+                final formattedDate = DateFormat("EEE, dd MMM yyyy hh:mm a").format(dateTime);
+                return Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade400, width: 1),
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                             Text(
+                              t["title"], // 👈 your extra text
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4), // spacing between texts
+                            Text(formattedDate), // 👈 your existing date
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: Center(
+                          child: Text(
+                            t["cashIn"] == 0 ? "" : formatter.format(t["cashIn"]),
+                            style: const TextStyle(color: Colors.green, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              t["cashIn"] == 0 ? "" : formatter.format(t["cashOut"]),
+                              style: const TextStyle(color: Colors.red, fontSize: 16),
+                            ),
+                            const SizedBox(height: 4), // spacing between texts
+                            Text(
+                              'Balance ${formatter.format(t["balance"])}',
+                              style: const TextStyle(fontSize: 12),
+                            ), // 👈 your existing date
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
@@ -227,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: const [
                       Text("Total Cash In", style: TextStyle(color: Colors.green)),
                       SizedBox(height: 4), // small spacing
-                      Text("24,000"), // your new text
+                      Text("24,000", style: TextStyle(color: Colors.green)), // your new text
                     ],
                   ),
                 ),
@@ -248,7 +446,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: const [
                       Text("Total Cash Out", style: TextStyle(color: Colors.red)),
                       SizedBox(height: 4), // small spacing
-                      Text("32,000"), // your new text
+                      Text("32,000", style: TextStyle(color: Colors.red)), // your new text
                     ],
                   ),
                 ),
@@ -266,10 +464,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center, // centers vertically
                     crossAxisAlignment: CrossAxisAlignment.center, // centers horizontally
-                    children: const [
+                    children: [
                       Text("Balance"),
                       SizedBox(height: 4), // small spacing
-                      Text("55,000"), // your new text
+                      Text(
+                        "$balance",
+                        style: TextStyle(
+                          color: balance < 0 ? Colors.red : Colors.green,
+                        ),
+                      ),// your new text
                     ],
                   ),
                 ),
