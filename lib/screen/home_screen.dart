@@ -13,6 +13,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> _cashbooks = ['Personal', 'Business', 'Savings'];
   int balance = -55000;
   final formatter = NumberFormat('#,###');
+  final List<Map<String, dynamic>> buttonData = [
+    {"text": "All", "action": () => print("All pressed")},
+    {"text": "Today", "action": () => print("Today pressed")},
+    {"text": "Weekly", "action": () => print("Weekly Out pressed")},
+    {"text": "Monthly", "action": () => print("Monthly pressed")},
+    {"text": "Yearly", "action": () => print("Yearly pressed")},
+    {"text": "Date range", "action": () => print("Date range pressed")},
+  ];
+
   final List<Map<String, dynamic>> transactions = [
     {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
     {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
@@ -122,6 +131,23 @@ class _HomeScreenState extends State<HomeScreen> {
     ));
   }
 
+  Widget buildFilterButton(String text, VoidCallback onPressed) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4), // outer padding
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 14),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: const TextStyle(fontSize: 14),
+        ),
+        child: Text(text),
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,107 +194,16 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           // 👇 Buttons above the ListView
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-             child:  Container(
-              color: Colors.blue.shade100, // 👈 background color here
-              padding: const EdgeInsets.all(8.0), // inner padding for content
+          Container(
+            color: Colors.blue.shade100, // 👈 background applied here
+            padding: const EdgeInsets.all(8.0),
+            width: double.infinity, // 👈 full screen width
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
               child: Row(
-                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
-                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
-                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
-                      ),
-                      child: const Text("All"),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
-                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
-                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
-                      ),
-                      child: const Text("Today"),
-                    ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
-                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
-                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
-                      ),
-                      child: const Text("Weekly"),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
-                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
-                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
-                      ),
-                      child: const Text("Single date"),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
-                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
-                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
-                      ),
-                      child: const Text("Monthly"),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
-                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
-                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
-                      ),
-                      child: const Text("Yearly"),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, top: 0,right: 4, bottom: 0), // outer padding
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 14), // 👈 removes default inner padding
-                        minimumSize: Size.zero,   // 👈 prevents Flutter from forcing min width/height
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 shrink hitbox
-                        textStyle: const TextStyle(fontSize: 14), // 👈 custom text size
-                      ),
-                      child: const Text("Date range"),
-                    ),
-                  ),
-                ],
+                children: buttonData
+                    .map((btn) => buildFilterButton(btn["text"], btn["action"]))
+                    .toList(),
               ),
             ),
       ),
