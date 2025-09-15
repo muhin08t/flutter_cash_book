@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'cash_in_out_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -304,7 +306,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     onPressed: () {
-                      // Handle Cash In
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const CashInOutScreen(isCashOut: false)),
+                      );
                     },
                     child: const Text(
                       "Cash In",
@@ -327,7 +332,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     onPressed: () {
-                      // Handle Cash Out
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const CashInOutScreen(isCashOut: true)),
+                      );
                     },
                     child: const Text(
                       "Cash Out",
