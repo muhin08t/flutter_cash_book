@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../db/database_helper.dart';
+import '../model/cash_record.dart';
 import 'cash_in_out_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,6 +17,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> _cashbooks = ['Personal', 'Business', 'Savings'];
   int balance = -55000;
   final formatter = NumberFormat('#,###');
+  List<CashRecord> cashRecords = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecords(); // 👈 call here when screen starts
+  }
+
   final List<Map<String, dynamic>> buttonData = [
     {"text": "All", "action": () => print("All pressed")},
     {"text": "Today", "action": () => print("Today pressed")},
@@ -127,6 +137,13 @@ class _HomeScreenState extends State<HomeScreen> {
     ));
   }
 
+  Future<void> _loadRecords() async {
+    final records  = await DatabaseHelper.instance.getCashRecords();
+    setState(() {
+      cashRecords = records;
+    });
+  }
+
   void _onMenuSelected(String value) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Selected: $value'),
@@ -149,6 +166,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  double getTotalCashIn(List<CashRecord> records) {
+    return records
+        .where((r) => !r.isCashOut)     // only cash in
+        .fold(0, (sum, r) => sum + r.amount);
+  }
+
+  double getTotalCashOut(List<CashRecord> records) {
+    return records
+        .where((r) => r.isCashOut)      // only cash out
+        .fold(0, (sum, r) => sum + r.amount);
+  }
+
+  double getBalance(List<CashRecord> records) {
+    return getTotalCashIn(records) - getTotalCashOut(records);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -225,10 +257,11 @@ class _HomeScreenState extends State<HomeScreen> {
           // ListView for rows
           Expanded(
             child: ListView.builder(
-              itemCount: transactions.length,
+              itemCount: cashRecords.length,
               itemBuilder: (context, index) {
-                final t = transactions[index];
-                final dateTime = DateTime.parse(t["date"]);
+                //final transaction = transactions[index];
+                final record = cashRecords[index];
+                final dateTime = record.date;
                 final formattedDate = DateFormat("EEE, dd MMM yyyy hh:mm a").format(dateTime);
                 return Container(
                   decoration: BoxDecoration(
@@ -246,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                              Text(
-                              t["title"], // 👈 your extra text
+                               record.note ?? "", // 👈 your extra text
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 4), // spacing between texts
@@ -258,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         flex: 1,
                         child: Center(
                           child: Text(
-                            t["cashIn"] == 0 ? "" : formatter.format(t["cashIn"]),
+                            record.isCashOut ? "" : formatter.format(record.amount),
                             style: const TextStyle(color: Colors.green, fontSize: 16),
                           ),
                         ),
@@ -269,12 +302,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              t["cashIn"] == 0 ? "" : formatter.format(t["cashOut"]),
+                              record.isCashOut ? formatter.format(record.amount) : "",
                               style: const TextStyle(color: Colors.red, fontSize: 16),
                             ),
                             const SizedBox(height: 4), // spacing between texts
                             Text(
-                              'Balance ${formatter.format(t["balance"])}',
+                              'Balance ${formatter.format(52000)}',
                               style: const TextStyle(fontSize: 12),
                             ), // 👈 your existing date
                           ],
@@ -365,10 +398,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center, // centers vertically
                     crossAxisAlignment: CrossAxisAlignment.center, // centers horizontally
-                    children: const [
+                    children:  [
                       Text("Total Cash In", style: TextStyle(color: Colors.green)),
                       SizedBox(height: 4), // small spacing
-                      Text("24,000", style: TextStyle(color: Colors.green)), // your new text
+                      Text(formatter.format(getTotalCashIn(cashRecords)), style: TextStyle(color: Colors.green)), // your new text
                     ],
                   ),
                 ),
@@ -386,10 +419,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center, // centers vertically
                     crossAxisAlignment: CrossAxisAlignment.center, // centers horizontally
-                    children: const [
+                    children:  [
                       Text("Total Cash Out", style: TextStyle(color: Colors.red)),
                       SizedBox(height: 4), // small spacing
-                      Text("32,000", style: TextStyle(color: Colors.red)), // your new text
+                      Text(formatter.format(getTotalCashOut(cashRecords)), style: TextStyle(color: Colors.red)), // your new text
                     ],
                   ),
                 ),
@@ -410,10 +443,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text("Balance"),
                       SizedBox(height: 4), // small spacing
-                      Text(
-                        "$balance",
+                      Text(formatter.format(getBalance(cashRecords)),
                         style: TextStyle(
-                          color: balance < 0 ? Colors.red : Colors.green,
+                          color: getBalance(cashRecords) < 0 ? Colors.red : Colors.green,
                         ),
                       ),// your new text
                     ],

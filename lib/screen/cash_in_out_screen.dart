@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../db/database_helper.dart';
+import '../model/cash_record.dart';
+
 class CashInOutScreen extends StatefulWidget {
   final bool isCashOut;
   const CashInOutScreen({super.key, required this.isCashOut});
@@ -49,7 +52,34 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     }
   }
 
+  Future<void> _saveCashRecord(bool isCashOut) async {
+    if (amountController.text.isEmpty) return;
 
+    final amount = double.tryParse(amountController.text);
+    if (amount == null) return;
+
+    final record = CashRecord(
+      amount: amount,
+      note: notesController.text,
+      isCashOut: isCashOut,
+      date: selectedDate,
+    );
+
+    await DatabaseHelper.instance.insertCashRecord(record);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Record inserted successfully!")),
+    );
+
+    amountController.clear();
+    notesController.clear();
+    _loadRecords();
+  }
+
+  Future<void> _loadRecords() async {
+    final data = await DatabaseHelper.instance.getCashRecords();
+    print(data.map((r) => r.toMap()).toList());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +203,9 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  _saveCashRecord(isCashOut);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.lightBlue.shade100,
                 ),
