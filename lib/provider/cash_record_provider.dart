@@ -5,10 +5,13 @@ import '../model/cash_record.dart';
 
 class CashRecordProvider extends ChangeNotifier {
   List<CashRecord> _records = [];
+  bool isLoading = false;
 
   List<CashRecord> get records => _records;
 
   Future<void> loadRecords() async {
+    isLoading = true;
+    notifyListeners();
     // Fetch from DB (ascending for correct balance)
     var fetched = await DatabaseHelper.instance.getCashRecords();
 
@@ -22,7 +25,7 @@ class CashRecordProvider extends ChangeNotifier {
 
     // Reverse if you want newest first in UI
     _records = updated.reversed.toList();
-
+    isLoading = false;
     notifyListeners(); // 👈 update UI
   }
 

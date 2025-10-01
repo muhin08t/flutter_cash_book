@@ -273,6 +273,12 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Consumer<CashRecordProvider>(
               builder: (context, provider, child) {
+                if (provider.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
                 final records = provider.records;
                 return ListView.builder(
                   itemCount: records.length,
