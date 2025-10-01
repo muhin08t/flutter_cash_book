@@ -4,6 +4,7 @@ class CashRecord {
   final String? note;
   final bool isCashOut;
   final DateTime date;
+  final double balance;
 
   CashRecord({
     this.id,
@@ -11,6 +12,7 @@ class CashRecord {
     this.note,
     required this.isCashOut,
     required this.date,
+    required this.balance,
   });
 
   // Convert object → Map (for insert)
@@ -32,6 +34,18 @@ class CashRecord {
       note: map['note'] as String?,
       isCashOut: (map['isCashOut'] as int) == 1,
       date: DateTime.parse(map['date'] as String),
+      balance: 0,
+    );
+  }
+
+  CashRecord copyWithBalance(double newBalance) {
+    return CashRecord(
+      id: id,
+      amount: amount,
+      note: note,
+      isCashOut: isCashOut,
+      date: date,
+      balance: newBalance,
     );
   }
 }

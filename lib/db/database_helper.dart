@@ -59,7 +59,7 @@ class DatabaseHelper {
   // Read all records
   Future<List<CashRecord>> getCashRecords() async {
     final db = await instance.database;
-    final result = await db.query(tableCashRecord, orderBy: "date DESC");
+    final result = await db.query(tableCashRecord, orderBy: "date ASC");
     return result.map((map) => CashRecord.fromMap(map)).toList();
   }
 }

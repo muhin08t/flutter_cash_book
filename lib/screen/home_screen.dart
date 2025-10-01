@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../db/database_helper.dart';
 import '../model/cash_record.dart';
+import '../provider/cash_record_provider.dart';
 import 'cash_in_out_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -139,8 +141,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadRecords() async {
     final records  = await DatabaseHelper.instance.getCashRecords();
+    //records.sort((a, b) => a.date.compareTo(b.date));
+    // 3. Calculate balances
+    double runningBalance = 0;
+    List<CashRecord> updated = [];
+
+    for (var r in records) {
+      if (r.isCashOut) {
+        runningBalance -= r.amount;
+      } else {
+        runningBalance += r.amount;
+      }
+      updated.add(r.copyWithBalance(runningBalance));
+    }
     setState(() {
-      cashRecords = records;
+      cashRecords = updated.reversed.toList();
     });
   }
 
@@ -256,65 +271,82 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           // ListView for rows
           Expanded(
-            child: ListView.builder(
-              itemCount: cashRecords.length,
-              itemBuilder: (context, index) {
-                //final transaction = transactions[index];
-                final record = cashRecords[index];
-                final dateTime = record.date;
-                final formattedDate = DateFormat("EEE, dd MMM yyyy hh:mm a").format(dateTime);
-                return Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey.shade400, width: 1),
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                             Text(
-                               record.note ?? "", // 👈 your extra text
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 4), // spacing between texts
-                            Text(formattedDate), // 👈 your existing date
-                          ],
+            child: Consumer<CashRecordProvider>(
+              builder: (context, provider, child) {
+                final records = provider.records;
+                return ListView.builder(
+                  itemCount: records.length,
+                  itemBuilder: (context, index) {
+                    //final transaction = transactions[index];
+                    final record = records[index];
+                    final dateTime = record.date;
+                    final formattedDate =
+                        DateFormat("EEE, dd MMM yyyy hh:mm a").format(dateTime);
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom:
+                              BorderSide(color: Colors.grey.shade400, width: 1),
                         ),
                       ),
-                      Expanded(
-                        flex: 1,
-                        child: Center(
-                          child: Text(
-                            record.isCashOut ? "" : formatter.format(record.amount),
-                            style: const TextStyle(color: Colors.green, fontSize: 16),
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  record.note ?? "", // 👈 your extra text
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                // spacing between texts
+                                Text(formattedDate),
+                                // 👈 your existing date
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              record.isCashOut ? formatter.format(record.amount) : "",
-                              style: const TextStyle(color: Colors.red, fontSize: 16),
+                          Expanded(
+                            flex: 1,
+                            child: Center(
+                              child: Text(
+                                record.isCashOut
+                                    ? ""
+                                    : formatter.format(record.amount),
+                                style: const TextStyle(
+                                    color: Colors.green, fontSize: 16),
+                              ),
                             ),
-                            const SizedBox(height: 4), // spacing between texts
-                            Text(
-                              'Balance ${formatter.format(52000)}',
-                              style: const TextStyle(fontSize: 12),
-                            ), // 👈 your existing date
-                          ],
-                        ),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  record.isCashOut
+                                      ? formatter.format(record.amount)
+                                      : "",
+                                  style: const TextStyle(
+                                      color: Colors.red, fontSize: 16),
+                                ),
+                                const SizedBox(height: 4),
+                                // spacing between texts
+                                Text(
+                                  'Balance ${formatter.format(record.balance)}',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                // 👈 your existing date
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
             ),

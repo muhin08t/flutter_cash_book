@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_cash_book/provider/cash_record_provider.dart';
 import 'package:flutter_cash_book/screen/home_screen.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => CashRecordProvider()..loadRecords(), // auto load on start
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

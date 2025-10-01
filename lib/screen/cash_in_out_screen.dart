@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../db/database_helper.dart';
 import '../model/cash_record.dart';
+import '../provider/cash_record_provider.dart';
 
 class CashInOutScreen extends StatefulWidget {
   final bool isCashOut;
@@ -52,28 +54,35 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     }
   }
 
-  Future<void> _saveCashRecord(bool isCashOut) async {
+  Future<void> _saveCashRecord(bool isCashOut, bool isExit) async {
     if (amountController.text.isEmpty) return;
 
     final amount = double.tryParse(amountController.text);
     if (amount == null) return;
-
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     final record = CashRecord(
       amount: amount,
       note: notesController.text,
       isCashOut: isCashOut,
       date: selectedDate,
+      balance: 0,
     );
 
-    await DatabaseHelper.instance.insertCashRecord(record);
-
-    ScaffoldMessenger.of(context).showSnackBar(
+     provider.insertRecord(record);
+     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Record inserted successfully!")),
     );
-
     amountController.clear();
     notesController.clear();
-    _loadRecords();
+
+    // Delay pop slightly so user sees the message
+    if(isExit) {
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      });
+    }
   }
 
   Future<void> _loadRecords() async {
@@ -204,7 +213,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  _saveCashRecord(isCashOut);
+                  _saveCashRecord(isCashOut,true);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.lightBlue.shade100,
@@ -215,7 +224,9 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
             SizedBox(width: 10),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  _saveCashRecord(isCashOut, false);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                 ),
