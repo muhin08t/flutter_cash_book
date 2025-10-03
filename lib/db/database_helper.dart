@@ -56,6 +56,25 @@ class DatabaseHelper {
     return await db.insert(tableCashRecord, record.toMap());
   }
 
+  Future<int> updateRecord(CashRecord record) async {
+    final db = await instance.database;
+    return await db.update(
+      tableCashRecord,
+      record.toMap(),
+      where: 'id = ?',
+      whereArgs: [record.id],
+    );
+  }
+
+  Future<int> deleteRecord(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      tableCashRecord,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   // Read all records
   Future<List<CashRecord>> getCashRecords() async {
     final db = await instance.database;

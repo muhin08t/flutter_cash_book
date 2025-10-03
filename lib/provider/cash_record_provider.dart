@@ -33,4 +33,14 @@ class CashRecordProvider extends ChangeNotifier {
     await DatabaseHelper.instance.insertCashRecord(record);
     await loadRecords(); // reload after insert
   }
+
+  Future<void> updateRecord(CashRecord record) async {
+    await DatabaseHelper.instance.updateRecord(record);
+    await loadRecords(); // reload after insert
+  }
+
+  Future<void> deleteRecord(int id) async {
+    await DatabaseHelper.instance.deleteRecord(id);
+    await loadRecords(); // reload after insert
+  }
 }

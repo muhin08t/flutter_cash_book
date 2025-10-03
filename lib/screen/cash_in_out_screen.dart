@@ -8,7 +8,9 @@ import '../provider/cash_record_provider.dart';
 
 class CashInOutScreen extends StatefulWidget {
   final bool isCashOut;
-  const CashInOutScreen({super.key, required this.isCashOut});
+  final CashRecord? cashRecord;
+
+  const CashInOutScreen({super.key, required this.isCashOut, this.cashRecord});
 
   @override
   State<CashInOutScreen> createState() => _CashInOutScreenState();
@@ -17,15 +19,36 @@ class CashInOutScreen extends StatefulWidget {
 class _CashInOutScreenState extends State<CashInOutScreen> {
   String selected = "No button pressed"; // 👈 state variable
   late bool isCashOut;
-  DateTime selectedDate = DateTime.now();
-  TimeOfDay selectedTime = TimeOfDay.now();
-  final TextEditingController amountController = TextEditingController();
-  final TextEditingController notesController = TextEditingController();
+  late DateTime  selectedDate;
+  late TimeOfDay selectedTime;
+  late TextEditingController amountController;
+  late TextEditingController notesController;
 
   @override
   void initState() {
     super.initState();
     isCashOut = widget.isCashOut; // 👈 initialize from constructor
+    // If record is null -> new entry, else fill with existing
+    amountController = TextEditingController(
+      text: widget.cashRecord == null
+          ? ""
+          : (widget.cashRecord!.amount % 1 == 0
+          ? widget.cashRecord!.amount.toInt().toString()
+          : widget.cashRecord!.amount.toString()),
+    );
+    notesController = TextEditingController(
+      text: widget.cashRecord?.note ?? "",
+    );
+
+    if (widget.cashRecord != null) {
+      // Use record values
+      selectedDate = widget.cashRecord!.date;
+      selectedTime = TimeOfDay.fromDateTime(widget.cashRecord!.date);
+    } else {
+      // Use current date/time
+      selectedDate = DateTime.now();
+      selectedTime = TimeOfDay.now();
+    }
   }
 
   Future<void> _pickDate() async {
@@ -37,7 +60,16 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     );
     if (picked != null && picked != selectedDate) {
       setState(() {
-        selectedDate = picked;
+        // selectedDate = picked;
+        final now = DateTime.now(); // 👈 get current time
+        selectedDate = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          now.hour,
+          now.minute,
+          now.second,
+        );
       });
     }
   }
@@ -50,6 +82,14 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     if (picked != null && picked != selectedTime) {
       setState(() {
         selectedTime = picked;
+        // 👇 merge date + time into a full DateTime
+        selectedDate = DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          picked.hour,
+          picked.minute,
+        );
       });
     }
   }
@@ -83,6 +123,50 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
         }
       });
     }
+  }
+
+  Future<void> _updateRecord(bool isCashOut) async {
+    print("Updating record");
+    if (amountController.text.isEmpty) return;
+
+    final amount = double.tryParse(amountController.text);
+    if (amount == null) return;
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    final record = CashRecord(
+      id: widget.cashRecord?.id,
+      amount: amount,
+      note: notesController.text,
+      isCashOut: isCashOut,
+      date: selectedDate,
+      balance: 0,
+    );
+
+    provider.updateRecord(record);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Record updated successfully!")),
+    );
+    amountController.clear();
+    notesController.clear();
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    });
+  }
+
+  Future<void> _deleteRecord() async {
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    provider.deleteRecord(widget.cashRecord!.id!);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Record deleted successfully!")),
+    );
+    amountController.clear();
+    notesController.clear();
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    });
   }
 
   Future<void> _loadRecords() async {
@@ -210,32 +294,64 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
         ),
         child: Row(
           children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  _saveCashRecord(isCashOut,true);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.lightBlue.shade100,
+            if(widget.cashRecord == null) ...[
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    _saveCashRecord(isCashOut, true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.lightBlue.shade100,
+                  ),
+                  child: const Text(
+                      "Save and exit", style: TextStyle(color: Colors.blue)),
                 ),
-                child: const Text("Save and exit", style: TextStyle(color: Colors.blue)),
               ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  _saveCashRecord(isCashOut, false);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+              SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    _saveCashRecord(isCashOut, false);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                  ),
+                  child: const Text("Save and continue",
+                    style: TextStyle(
+                      color: Colors.white, // 👈 set your desired color here
+                    ),),
                 ),
-                child: const Text("Save and continue",
-                  style: TextStyle(
-                    color: Colors.white, // 👈 set your desired color here
-                  ),),
               ),
-            ),
+            ],
+              if(widget.cashRecord != null) ...[
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _deleteRecord();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    child: const Text(
+                        "Delete", style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _updateRecord(isCashOut);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                    ),
+                    child: const Text("Update",
+                      style: TextStyle(
+                        color: Colors.white, // 👈 set your desired color here
+                      ),),
+                  ),
+                ),
+              ],
           ],
         ),
       ),

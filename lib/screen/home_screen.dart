@@ -287,8 +287,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     final record = records[index];
                     final dateTime = record.date;
                     final formattedDate =
-                        DateFormat("EEE, dd MMM yyyy hh:mm a").format(dateTime);
-                    return Container(
+                    DateFormat("EEE, dd MMM yyyy hh:mm a").format(dateTime);
+                    return InkWell(
+                        onTap: () {
+                          print("Item tapped: ${record.amount}");
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) =>  CashInOutScreen(isCashOut: record.isCashOut, cashRecord: record)),
+                          );
+                        },
+                    child:  Container(
                       decoration: BoxDecoration(
                         border: Border(
                           bottom:
@@ -351,6 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
+                    ),
                     );
                   },
                 );
