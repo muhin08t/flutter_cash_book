@@ -66,9 +66,9 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
           picked.year,
           picked.month,
           picked.day,
-          now.hour,
-          now.minute,
-          now.second,
+          widget.cashRecord == null ? now.hour : selectedDate.hour,
+          widget.cashRecord == null ? now.minute : selectedDate.minute,
+          widget.cashRecord == null ? now.second : selectedDate.second,
         );
       });
     }
@@ -94,8 +94,18 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     }
   }
 
-  Future<void> _saveCashRecord(bool isCashOut, bool isExit) async {
-    if (amountController.text.isEmpty) return;
+  Future<void> _saveCashRecord(BuildContext context, bool isCashOut, bool isExit) async {
+    if (amountController.text.isEmpty) {
+      // show alert
+      showDialog(
+        context: context,
+        builder: (context) => const AlertDialog(
+          title: Text("Validation Error"),
+          content: Text("Amount cannot be empty."),
+        ),
+      );
+      return;
+    }
 
     final amount = double.tryParse(amountController.text);
     if (amount == null) return;
@@ -108,26 +118,36 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
       balance: 0,
     );
 
-     provider.insertRecord(record);
-     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Record inserted successfully!")),
-    );
+     int id =  await provider.insertRecord(record);
+    if (!context.mounted) return;
+     if(id > 0) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         const SnackBar(content: Text("Record inserted successfully!")),
+       );
+       if(isExit) {
+         Navigator.pop(context);
+       }
+     } else {
+       ScaffoldMessenger.of(context).showSnackBar(
+         const SnackBar(content: Text("Insert failed")),
+       );
+     }
     amountController.clear();
     notesController.clear();
-
-    // Delay pop slightly so user sees the message
-    if(isExit) {
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          Navigator.pop(context);
-        }
-      });
-    }
   }
 
-  Future<void> _updateRecord(bool isCashOut) async {
-    print("Updating record");
-    if (amountController.text.isEmpty) return;
+  Future<void> _updateRecord(BuildContext context, bool isCashOut) async {
+    if (amountController.text.isEmpty) {
+      // show alert
+      showDialog(
+        context: context,
+        builder: (context) => const AlertDialog(
+          title: Text("Validation Error"),
+          content: Text("Amount cannot be empty."),
+        ),
+      );
+      return;
+    }
 
     final amount = double.tryParse(amountController.text);
     if (amount == null) return;
@@ -141,32 +161,39 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
       balance: 0,
     );
 
-    provider.updateRecord(record);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Record updated successfully!")),
-    );
-    amountController.clear();
-    notesController.clear();
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
+    int id = await provider.updateRecord(record);
+    if (!context.mounted) return;
+
+    if(id > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Record updated successfully!")),
+      );
         Navigator.pop(context);
-      }
-    });
+
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Update failed")),
+      );
+    }
+
   }
 
-  Future<void> _deleteRecord() async {
+  Future<void> _deleteRecord(BuildContext context) async {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.deleteRecord(widget.cashRecord!.id!);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Record deleted successfully!")),
-    );
-    amountController.clear();
-    notesController.clear();
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        Navigator.pop(context);
-      }
-    });
+    int id = await provider.deleteRecord(widget.cashRecord!.id!);
+    if (!context.mounted) return;
+
+    if(id > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Record deleted successfully!")),
+      );
+      Navigator.pop(context);
+
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Delete failed")),
+      );
+    }
   }
 
   Future<void> _loadRecords() async {
@@ -298,7 +325,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    _saveCashRecord(isCashOut, true);
+                    _saveCashRecord(context,isCashOut, true);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.lightBlue.shade100,
@@ -311,7 +338,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    _saveCashRecord(isCashOut, false);
+                    _saveCashRecord(context, isCashOut, false);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
@@ -327,7 +354,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      _deleteRecord();
+                      _deleteRecord(context);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
@@ -340,7 +367,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      _updateRecord(isCashOut);
+                      _updateRecord(context, isCashOut);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,

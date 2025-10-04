@@ -29,18 +29,21 @@ class CashRecordProvider extends ChangeNotifier {
     notifyListeners(); // 👈 update UI
   }
 
-  Future<void> insertRecord(CashRecord record) async {
-    await DatabaseHelper.instance.insertCashRecord(record);
+  Future<int> insertRecord(CashRecord record) async {
+    int id =  await DatabaseHelper.instance.insertCashRecord(record);
     await loadRecords(); // reload after insert
+    return id;
   }
 
-  Future<void> updateRecord(CashRecord record) async {
-    await DatabaseHelper.instance.updateRecord(record);
+  Future<int> updateRecord(CashRecord record) async {
+    int id = await DatabaseHelper.instance.updateRecord(record);
     await loadRecords(); // reload after insert
+    return id;
   }
 
-  Future<void> deleteRecord(int id) async {
-    await DatabaseHelper.instance.deleteRecord(id);
+  Future<int> deleteRecord(int id) async {
+    int idd =  await DatabaseHelper.instance.deleteRecord(id);
     await loadRecords(); // reload after insert
+    return idd;
   }
 }
