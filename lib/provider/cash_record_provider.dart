@@ -11,6 +11,7 @@ class CashRecordProvider extends ChangeNotifier {
 
   Future<void> loadRecords() async {
     isLoading = true;
+    _records.clear();
     notifyListeners();
     // Fetch from DB (ascending for correct balance)
     var fetched = await DatabaseHelper.instance.getCashRecords();
@@ -27,6 +28,69 @@ class CashRecordProvider extends ChangeNotifier {
     _records = updated.reversed.toList();
     isLoading = false;
     notifyListeners(); // 👈 update UI
+  }
+
+  Future<void> loadTodayRecords() async {
+    isLoading = true;
+    _records.clear();
+    notifyListeners();
+    // Fetch from DB (ascending for correct balance)
+    var fetched = await DatabaseHelper.instance.getTodayRecords();
+
+    // Calculate balances
+    double runningBalance = 0;
+    List<CashRecord> updated = [];
+    for (var r in fetched) {
+      runningBalance += r.isCashOut ? -r.amount : r.amount;
+      updated.add(r.copyWithBalance(runningBalance));
+    }
+
+    // Reverse if you want newest first in UI
+    _records = updated.reversed.toList();
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadWeeklyRecords() async {
+    isLoading = true;
+    _records.clear();
+    notifyListeners();
+    // Fetch from DB (ascending for correct balance)
+    var fetched = await DatabaseHelper.instance.getLast7DaysCashRecords();
+
+    // Calculate balances
+    double runningBalance = 0;
+    List<CashRecord> updated = [];
+    for (var r in fetched) {
+      runningBalance += r.isCashOut ? -r.amount : r.amount;
+      updated.add(r.copyWithBalance(runningBalance));
+    }
+
+    // Reverse if you want newest first in UI
+    _records = updated.reversed.toList();
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMonthlyRecords() async {
+    isLoading = true;
+    _records.clear();
+    notifyListeners();
+    // Fetch from DB (ascending for correct balance)
+    var fetched = await DatabaseHelper.instance.getMonthlyCashRecords();
+
+    // Calculate balances
+    double runningBalance = 0;
+    List<CashRecord> updated = [];
+    for (var r in fetched) {
+      runningBalance += r.isCashOut ? -r.amount : r.amount;
+      updated.add(r.copyWithBalance(runningBalance));
+    }
+
+    // Reverse if you want newest first in UI
+    _records = updated.reversed.toList();
+    isLoading = false;
+    notifyListeners();
   }
 
   Future<int> insertRecord(CashRecord record) async {

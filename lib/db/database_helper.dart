@@ -81,4 +81,34 @@ class DatabaseHelper {
     final result = await db.query(tableCashRecord, orderBy: "date ASC");
     return result.map((map) => CashRecord.fromMap(map)).toList();
   }
+
+  Future<List<CashRecord>>  getTodayRecords() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+    SELECT * FROM $tableCashRecord
+    WHERE date(date) = date('now', 'localtime')
+    ORDER BY date DESC
+  ''');
+    return result.map((map) => CashRecord.fromMap(map)).toList();
+  }
+
+  Future<List<CashRecord>> getLast7DaysCashRecords() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+    SELECT *
+    FROM $tableCashRecord
+    WHERE date(date) >= date('now', '-6 days', 'localtime')
+  ''');
+    return result.map((e) => CashRecord.fromMap(e)).toList();
+  }
+
+  Future<List<CashRecord>> getMonthlyCashRecords() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+    SELECT *
+    FROM $tableCashRecord
+    WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now', 'localtime')
+  ''');
+    return result.map((e) => CashRecord.fromMap(e)).toList();
+  }
 }

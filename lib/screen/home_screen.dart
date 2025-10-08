@@ -20,39 +20,54 @@ class _HomeScreenState extends State<HomeScreen> {
   int balance = -55000;
   final formatter = NumberFormat('#,###');
   List<CashRecord> cashRecords = [];
+  late List<Map<String, dynamic>> buttonData;
 
   @override
   void initState() {
     super.initState();
+    buttonData = [
+      {"text": "All", "action": handleAll },
+      {"text": "Today", "action": handleToday },
+      {"text": "Weekly", "action": handleWeekly},
+      {"text": "Monthly", "action": handleMonthly },
+      {"text": "Yearly", "action": handleYearly },
+      {"text": "Date range", "action": handleCustomDate},
+    ];
+
     _loadRecords(); // 👈 call here when screen starts
   }
 
-  final List<Map<String, dynamic>> buttonData = [
-    {"text": "All", "action": () => print("All pressed")},
-    {"text": "Today", "action": () => print("Today pressed")},
-    {"text": "Weekly", "action": () => print("Weekly Out pressed")},
-    {"text": "Monthly", "action": () => print("Monthly pressed")},
-    {"text": "Yearly", "action": () => print("Yearly pressed")},
-    {"text": "Date range", "action": () => print("Date range pressed")},
-  ];
+  void handleAll() {
+    print("All pressed");
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    provider.loadRecords();
+  }
 
-  final List<Map<String, dynamic>> transactions = [
-    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
-    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
-    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
-    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
-    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
-    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
-    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
-    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
-    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
-    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
-    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
-    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
-    {"date": "2025-08-31 00:15:00", "title": "ভাড়া", "cashIn": 10000, "cashOut": 5000, 'balance':5000},
-    {"date": "2025-08-31 10:15:00", "title": "ঔষধ", "cashIn": 2000, "cashOut": 3000,'balance':6000},
-    {"date": "2025-08-31 14:15:00", "title": "টিস্যু", "cashIn": 0, "cashOut": 7000, 'balance':7000},
-  ];
+  void handleToday() {
+    print("Today pressed");
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    provider.loadTodayRecords();
+  }
+
+  void handleWeekly() {
+    print("Today pressed");
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    provider.loadWeeklyRecords();
+  }
+
+  void handleMonthly() {
+    print("Today pressed");
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    provider.loadMonthlyRecords();
+  }
+
+  void handleYearly() {
+    print("Today pressed");
+  }
+
+  void handleCustomDate() {
+    print("Today pressed");
+  }
 
   void _openCashbookDialog() async {
     final result = await showDialog<String>(
