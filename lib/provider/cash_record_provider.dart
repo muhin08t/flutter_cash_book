@@ -9,105 +9,65 @@ class CashRecordProvider extends ChangeNotifier {
 
   List<CashRecord> get records => _records;
 
-  Future<void> loadRecords() async {
+  Future<void> loadCashRecords(String filterType) async {
     isLoading = true;
     _records.clear();
     notifyListeners();
-    // Fetch from DB (ascending for correct balance)
-    var fetched = await DatabaseHelper.instance.getCashRecords();
-
-    // Calculate balances
-    double runningBalance = 0;
-    List<CashRecord> updated = [];
-    for (var r in fetched) {
-      runningBalance += r.isCashOut ? -r.amount : r.amount;
-      updated.add(r.copyWithBalance(runningBalance));
+    List<CashRecord> fetchedData = [];
+    switch (filterType) {
+      case 'all':
+        fetchedData = await DatabaseHelper.instance.getAllCashRecords();
+        break;
+      case 'today':
+        fetchedData = await DatabaseHelper.instance.getTodayRecords();
+        break;
+      case 'weekly':
+        fetchedData = await DatabaseHelper.instance.getLast7DaysCashRecords();
+        break;
+      case 'monthly':
+        fetchedData = await DatabaseHelper.instance.getMonthlyCashRecords();
+        break;
+      case 'yearly':
+        fetchedData = await DatabaseHelper.instance.getYearlyCashRecords();
+        break;
+      default:
+        print('Invalid filter type');
     }
 
-    // Reverse if you want newest first in UI
-    _records = updated.reversed.toList();
-    isLoading = false;
-    notifyListeners(); // 👈 update UI
-  }
-
-  Future<void> loadTodayRecords() async {
-    isLoading = true;
-    _records.clear();
-    notifyListeners();
-    // Fetch from DB (ascending for correct balance)
-    var fetched = await DatabaseHelper.instance.getTodayRecords();
-
-    // Calculate balances
-    double runningBalance = 0;
-    List<CashRecord> updated = [];
-    for (var r in fetched) {
-      runningBalance += r.isCashOut ? -r.amount : r.amount;
-      updated.add(r.copyWithBalance(runningBalance));
-    }
-
-    // Reverse if you want newest first in UI
-    _records = updated.reversed.toList();
+    _records = calculateRunningBalance(fetchedData);
     isLoading = false;
     notifyListeners();
   }
 
-  Future<void> loadWeeklyRecords() async {
-    isLoading = true;
-    _records.clear();
-    notifyListeners();
-    // Fetch from DB (ascending for correct balance)
-    var fetched = await DatabaseHelper.instance.getLast7DaysCashRecords();
-
-    // Calculate balances
+  List<CashRecord> calculateRunningBalance(List<CashRecord> fetchedData) {
     double runningBalance = 0;
-    List<CashRecord> updated = [];
-    for (var r in fetched) {
+    List<CashRecord> updatedData = [];
+
+    for (var r in fetchedData) {
       runningBalance += r.isCashOut ? -r.amount : r.amount;
-      updated.add(r.copyWithBalance(runningBalance));
+      updatedData.add(r.copyWithBalance(runningBalance));
     }
 
-    // Reverse if you want newest first in UI
-    _records = updated.reversed.toList();
-    isLoading = false;
-    notifyListeners();
+    // Reverse if you want newest first
+    return updatedData.reversed.toList();
   }
 
-  Future<void> loadMonthlyRecords() async {
-    isLoading = true;
-    _records.clear();
-    notifyListeners();
-    // Fetch from DB (ascending for correct balance)
-    var fetched = await DatabaseHelper.instance.getMonthlyCashRecords();
-
-    // Calculate balances
-    double runningBalance = 0;
-    List<CashRecord> updated = [];
-    for (var r in fetched) {
-      runningBalance += r.isCashOut ? -r.amount : r.amount;
-      updated.add(r.copyWithBalance(runningBalance));
-    }
-
-    // Reverse if you want newest first in UI
-    _records = updated.reversed.toList();
-    isLoading = false;
-    notifyListeners();
-  }
 
   Future<int> insertRecord(CashRecord record) async {
     int id =  await DatabaseHelper.instance.insertCashRecord(record);
-    await loadRecords(); // reload after insert
+    await loadCashRecords("all"); // reload after insert
     return id;
   }
 
   Future<int> updateRecord(CashRecord record) async {
     int id = await DatabaseHelper.instance.updateRecord(record);
-    await loadRecords(); // reload after insert
+    await loadCashRecords("all"); // reload after insert
     return id;
   }
 
   Future<int> deleteRecord(int id) async {
     int idd =  await DatabaseHelper.instance.deleteRecord(id);
-    await loadRecords(); // reload after insert
+    await loadCashRecords("all"); // reload after insert
     return idd;
   }
 }

@@ -76,7 +76,7 @@ class DatabaseHelper {
   }
 
   // Read all records
-  Future<List<CashRecord>> getCashRecords() async {
+  Future<List<CashRecord>> getAllCashRecords() async {
     final db = await instance.database;
     final result = await db.query(tableCashRecord, orderBy: "date ASC");
     return result.map((map) => CashRecord.fromMap(map)).toList();
@@ -91,6 +91,21 @@ class DatabaseHelper {
   ''');
     return result.map((map) => CashRecord.fromMap(map)).toList();
   }
+
+  Future<List<CashRecord>> getRecordsByDate(DateTime date) async {
+    final db = await instance.database;
+    // Format date to 'YYYY-MM-DD' (SQLite date format)
+    final formattedDate = date.toIso8601String().split('T').first;
+
+    final result = await db.rawQuery('''
+    SELECT * FROM $tableCashRecord
+    WHERE date(date) = ?
+    ORDER BY date DESC
+  ''', [formattedDate]);
+
+    return result.map((map) => CashRecord.fromMap(map)).toList();
+  }
+
 
   Future<List<CashRecord>> getLast7DaysCashRecords() async {
     final db = await instance.database;
@@ -111,4 +126,15 @@ class DatabaseHelper {
   ''');
     return result.map((e) => CashRecord.fromMap(e)).toList();
   }
+
+  Future<List<CashRecord>> getYearlyCashRecords() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+    SELECT *
+    FROM $tableCashRecord
+    WHERE strftime('%Y', date) = strftime('%Y', 'now', 'localtime')
+  ''');
+    return result.map((e) => CashRecord.fromMap(e)).toList();
+  }
+
 }

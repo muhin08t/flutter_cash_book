@@ -196,11 +196,6 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     }
   }
 
-  Future<void> _loadRecords() async {
-    final data = await DatabaseHelper.instance.getCashRecords();
-    print(data.map((r) => r.toMap()).toList());
-  }
-
   @override
   Widget build(BuildContext context) {
 

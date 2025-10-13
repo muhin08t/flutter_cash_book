@@ -31,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
       {"text": "Weekly", "action": handleWeekly},
       {"text": "Monthly", "action": handleMonthly },
       {"text": "Yearly", "action": handleYearly },
+      {"text": "Single Day", "action": _pickDate },
       {"text": "Date range", "action": handleCustomDate},
     ];
 
@@ -40,33 +41,48 @@ class _HomeScreenState extends State<HomeScreen> {
   void handleAll() {
     print("All pressed");
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadRecords();
+    provider.loadCashRecords("all");
   }
 
   void handleToday() {
     print("Today pressed");
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadTodayRecords();
+    provider.loadCashRecords("today");
   }
 
   void handleWeekly() {
     print("Today pressed");
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadWeeklyRecords();
+    provider.loadCashRecords("weekly");
   }
 
   void handleMonthly() {
     print("Today pressed");
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadMonthlyRecords();
+    provider.loadCashRecords("monthly");
   }
 
   void handleYearly() {
     print("Today pressed");
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    provider.loadCashRecords("yearly");
   }
 
   void handleCustomDate() {
     print("Today pressed");
+  }
+
+  Future<void> _pickDate() async {
+    DateTime selectedDate = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      selectedDate = picked;
+    }
   }
 
   void _openCashbookDialog() async {
@@ -155,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadRecords() async {
-    final records  = await DatabaseHelper.instance.getCashRecords();
+    final records  = await DatabaseHelper.instance.getAllCashRecords();
     //records.sort((a, b) => a.date.compareTo(b.date));
     // 3. Calculate balances
     double runningBalance = 0;
