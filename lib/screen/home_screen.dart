@@ -32,44 +32,35 @@ class _HomeScreenState extends State<HomeScreen> {
       {"text": "Monthly", "action": handleMonthly },
       {"text": "Yearly", "action": handleYearly },
       {"text": "Single Day", "action": _pickDate },
-      {"text": "Date range", "action": handleCustomDate},
+      {"text": "Date range", "action": _pickDateRange},
     ];
 
     _loadRecords(); // 👈 call here when screen starts
   }
 
   void handleAll() {
-    print("All pressed");
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("all");
   }
 
   void handleToday() {
-    print("Today pressed");
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("today");
   }
 
   void handleWeekly() {
-    print("Today pressed");
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("weekly");
   }
 
   void handleMonthly() {
-    print("Today pressed");
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("monthly");
   }
 
   void handleYearly() {
-    print("Today pressed");
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("yearly");
-  }
-
-  void handleCustomDate() {
-    print("Today pressed");
   }
 
   Future<void> _pickDate() async {
@@ -80,9 +71,27 @@ class _HomeScreenState extends State<HomeScreen> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (picked != null) {
+
+    if (!mounted || picked == null) return;
       selectedDate = picked;
-    }
+      final provider = Provider.of<CashRecordProvider>(context, listen: false);
+      provider.loadSingleDateRecord(selectedDate);
+
+  }
+
+  Future<void> _pickDateRange() async {
+    DateTimeRange? selectedRange;
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000), // earliest date
+      lastDate: DateTime(2100),  // latest date
+      initialDateRange: selectedRange, // preselect previous range (optional)
+    );
+
+    if (!mounted || picked == null) return;
+      final provider = Provider.of<CashRecordProvider>(context, listen: false);
+      provider.loadRecordByDateRange(picked.start, picked.end);
+
   }
 
   void _openCashbookDialog() async {
@@ -321,7 +330,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     DateFormat("EEE, dd MMM yyyy hh:mm a").format(dateTime);
                     return InkWell(
                         onTap: () {
-                          print("Item tapped: ${record.amount}");
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) =>  CashInOutScreen(isCashOut: record.isCashOut, cashRecord: record)),

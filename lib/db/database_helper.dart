@@ -106,6 +106,22 @@ class DatabaseHelper {
     return result.map((map) => CashRecord.fromMap(map)).toList();
   }
 
+  Future<List<CashRecord>> getRecordsByDateRange(
+      DateTime startDate, DateTime endDate) async {
+    final db = await instance.database;
+
+    // Format dates as 'YYYY-MM-DD'
+    final start = startDate.toIso8601String().split('T').first;
+    final end = endDate.toIso8601String().split('T').first;
+
+    final result = await db.rawQuery('''
+    SELECT * FROM $tableCashRecord
+    WHERE date(date) BETWEEN ? AND ?
+    ORDER BY date DESC
+  ''', [start, end]);
+
+    return result.map((map) => CashRecord.fromMap(map)).toList();
+  }
 
   Future<List<CashRecord>> getLast7DaysCashRecords() async {
     final db = await instance.database;

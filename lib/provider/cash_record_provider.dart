@@ -31,8 +31,34 @@ class CashRecordProvider extends ChangeNotifier {
         fetchedData = await DatabaseHelper.instance.getYearlyCashRecords();
         break;
       default:
-        print('Invalid filter type');
+        fetchedData = await DatabaseHelper.instance.getAllCashRecords();
+        break;
     }
+
+    _records = calculateRunningBalance(fetchedData);
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadSingleDateRecord(DateTime dateTime) async {
+    isLoading = true;
+    _records.clear();
+    notifyListeners();
+    List<CashRecord> fetchedData = [];
+    fetchedData = await DatabaseHelper.instance.getRecordsByDate(dateTime);
+
+    _records = calculateRunningBalance(fetchedData);
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadRecordByDateRange(DateTime startDateTime,
+      DateTime endDateTime) async {
+    isLoading = true;
+    _records.clear();
+    notifyListeners();
+    List<CashRecord> fetchedData = [];
+    fetchedData = await DatabaseHelper.instance.getRecordsByDateRange(startDateTime, endDateTime);
 
     _records = calculateRunningBalance(fetchedData);
     isLoading = false;
