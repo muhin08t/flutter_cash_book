@@ -1,5 +1,6 @@
 class CashRecord {
   final int? id;
+  final int bookId;
   final double amount;
   final String? note;
   final bool isCashOut;
@@ -8,6 +9,7 @@ class CashRecord {
 
   CashRecord({
     this.id,
+    required this.bookId,
     required this.amount,
     this.note,
     required this.isCashOut,
@@ -19,6 +21,7 @@ class CashRecord {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'book_id': bookId,
       'amount': amount,
       'note': note,
       'isCashOut': isCashOut ? 1 : 0,
@@ -30,6 +33,7 @@ class CashRecord {
   factory CashRecord.fromMap(Map<String, dynamic> map) {
     return CashRecord(
       id: map['id'] as int?,
+      bookId: map['book_id'] as int,
       amount: map['amount'] as double,
       note: map['note'] as String?,
       isCashOut: (map['isCashOut'] as int) == 1,
@@ -41,6 +45,7 @@ class CashRecord {
   CashRecord copyWithBalance(double newBalance) {
     return CashRecord(
       id: id,
+      bookId: bookId,
       amount: amount,
       note: note,
       isCashOut: isCashOut,

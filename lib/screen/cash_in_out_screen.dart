@@ -112,6 +112,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
     final record = CashRecord(
       amount: amount,
+      bookId: 1,
       note: notesController.text,
       isCashOut: isCashOut,
       date: selectedDate,
@@ -154,6 +155,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
     final record = CashRecord(
       id: widget.cashRecord?.id,
+      bookId: 1,
       amount: amount,
       note: notesController.text,
       isCashOut: isCashOut,

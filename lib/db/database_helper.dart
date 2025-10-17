@@ -1,12 +1,14 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
+import '../model/book.dart';
 import '../model/cash_record.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static final String dbName = 'cash.db';
+  static final String dbName = 'cash_book.db';
+  static final String tableBooks = 'books';
   static final String tableCashRecord = 'cash_records';
 
   DatabaseHelper._init();
@@ -23,19 +25,29 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
     );
   }
 
   Future _createDB(Database db, int version) async {
     await db.execute('''
+        CREATE TABLE $tableBooks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      ''');
+
+    await db.execute('''
       CREATE TABLE $tableCashRecord (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        book_id INTEGER NOT NULL,
         amount REAL NOT NULL,
         note TEXT,
         isCashOut INTEGER NOT NULL,
-        date TEXT NOT NULL
+        date TEXT NOT NULL,
+        FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE
       )
     ''');
   }
@@ -50,10 +62,33 @@ class DatabaseHelper {
   //   });
   // }
 
+  Future<int> insertBook(Book book) async {
+    final db = await instance.database;
+    return await db.insert(tableBooks, book.toMap());
+  }
+
+  Future<List<Book>> getBooks() async {
+    final db = await instance.database;
+    final result = await db.query(tableBooks, orderBy: 'id DESC');
+    return result.map((e) => Book.fromMap(e)).toList();
+  }
+
+
   // Insert record
   Future<int> insertCashRecord(CashRecord record) async {
     final db = await instance.database;
     return await db.insert(tableCashRecord, record.toMap());
+  }
+
+  Future<List<CashRecord>> getRecordsByBook(int bookId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      tableCashRecord,
+      where: 'book_id = ?',
+      whereArgs: [bookId],
+      orderBy: 'date DESC',
+    );
+    return result.map((e) => CashRecord.fromMap(e)).toList();
   }
 
   Future<int> updateRecord(CashRecord record) async {
