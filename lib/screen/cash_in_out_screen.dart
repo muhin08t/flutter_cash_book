@@ -9,8 +9,10 @@ import '../provider/cash_record_provider.dart';
 class CashInOutScreen extends StatefulWidget {
   final bool isCashOut;
   final CashRecord? cashRecord;
+  final int bookId;
 
-  const CashInOutScreen({super.key, required this.isCashOut, this.cashRecord});
+  const CashInOutScreen({super.key, required this.isCashOut,
+    this.cashRecord, required this.bookId});
 
   @override
   State<CashInOutScreen> createState() => _CashInOutScreenState();
@@ -18,6 +20,7 @@ class CashInOutScreen extends StatefulWidget {
 
 class _CashInOutScreenState extends State<CashInOutScreen> {
   String selected = "No button pressed"; // 👈 state variable
+  late int selectedBookId;
   late bool isCashOut;
   late DateTime  selectedDate;
   late TimeOfDay selectedTime;
@@ -28,6 +31,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
   void initState() {
     super.initState();
     isCashOut = widget.isCashOut; // 👈 initialize from constructor
+    selectedBookId = widget.bookId;
     // If record is null -> new entry, else fill with existing
     amountController = TextEditingController(
       text: widget.cashRecord == null
@@ -112,7 +116,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
     final record = CashRecord(
       amount: amount,
-      bookId: 1,
+      bookId: selectedBookId,
       note: notesController.text,
       isCashOut: isCashOut,
       date: selectedDate,
@@ -155,7 +159,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
     final record = CashRecord(
       id: widget.cashRecord?.id,
-      bookId: 1,
+      bookId: selectedBookId,
       amount: amount,
       note: notesController.text,
       isCashOut: isCashOut,
@@ -182,7 +186,7 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
 
   Future<void> _deleteRecord(BuildContext context) async {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    int id = await provider.deleteRecord(widget.cashRecord!.id!);
+    int id = await provider.deleteRecord(widget.cashRecord!.id!, widget.cashRecord!.bookId);
     if (!context.mounted) return;
 
     if(id > 0) {

@@ -1,22 +1,27 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_cash_book/model/book.dart';
 
 import '../db/database_helper.dart';
 import '../model/cash_record.dart';
 
 class CashRecordProvider extends ChangeNotifier {
   List<CashRecord> _records = [];
+  List<Book> _books = [];
   bool isLoading = false;
+  Book? _selectedBook;
 
   List<CashRecord> get records => _records;
+  List<Book> get books => _books;
+  Book? get selectedBook => _selectedBook;
 
-  Future<void> loadCashRecords(String filterType) async {
+  Future<void> loadCashRecords(String filterType, int bookId) async {
     isLoading = true;
     _records.clear();
     notifyListeners();
     List<CashRecord> fetchedData = [];
     switch (filterType) {
       case 'all':
-        fetchedData = await DatabaseHelper.instance.getAllCashRecords();
+        fetchedData = await DatabaseHelper.instance.getAllCashRecords(bookId);
         break;
       case 'today':
         fetchedData = await DatabaseHelper.instance.getTodayRecords();
@@ -31,7 +36,7 @@ class CashRecordProvider extends ChangeNotifier {
         fetchedData = await DatabaseHelper.instance.getYearlyCashRecords();
         break;
       default:
-        fetchedData = await DatabaseHelper.instance.getAllCashRecords();
+        fetchedData = await DatabaseHelper.instance.getAllCashRecords(bookId);
         break;
     }
 
@@ -81,19 +86,37 @@ class CashRecordProvider extends ChangeNotifier {
 
   Future<int> insertRecord(CashRecord record) async {
     int id =  await DatabaseHelper.instance.insertCashRecord(record);
-    await loadCashRecords("all"); // reload after insert
+    await loadCashRecords("all",record.bookId); // reload after insert
     return id;
   }
 
   Future<int> updateRecord(CashRecord record) async {
     int id = await DatabaseHelper.instance.updateRecord(record);
-    await loadCashRecords("all"); // reload after insert
+    await loadCashRecords("all", record.bookId); // reload after insert
     return id;
   }
 
-  Future<int> deleteRecord(int id) async {
+  Future<int> deleteRecord(int id, int bookId) async {
     int idd =  await DatabaseHelper.instance.deleteRecord(id);
-    await loadCashRecords("all"); // reload after insert
+    await loadCashRecords("all",bookId); // reload after insert
     return idd;
+  }
+
+  Future<void> loadBooks() async {
+    isLoading = true;
+    _books.clear();
+    notifyListeners();
+    _books = await DatabaseHelper.instance.getBooks();
+    isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> setSelectedBook(int bookId) async {
+    await DatabaseHelper.instance.setSelectedBook(bookId);
+  }
+
+  Future<void> loadSelectedBook() async {
+    _selectedBook =  await DatabaseHelper.instance.getSelectedBook();
+    notifyListeners();
   }
 }

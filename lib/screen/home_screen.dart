@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../db/database_helper.dart';
+import '../model/book.dart';
 import '../model/cash_record.dart';
 import '../provider/cash_record_provider.dart';
 import 'cash_in_out_screen.dart';
@@ -15,7 +16,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _selectedCashbook = 'Personal';
+  String _selectedCashbook = 'select book';
+  int selectedBookId = 1;
   final List<String> _cashbooks = ['Personal', 'Business', 'Savings'];
   int balance = -55000;
   final formatter = NumberFormat('#,###');
@@ -35,32 +37,38 @@ class _HomeScreenState extends State<HomeScreen> {
       {"text": "Date range", "action": _pickDateRange},
     ];
 
-    _loadRecords(); // 👈 call here when screen starts
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final cashRecordProvider = Provider.of<CashRecordProvider>(context, listen: false);
+      await cashRecordProvider.loadSelectedBook();
+      _selectedCashbook = cashRecordProvider.selectedBook!.name;
+      selectedBookId = cashRecordProvider.selectedBook!.id!;
+      await cashRecordProvider.loadCashRecords('all', selectedBookId);
+    });
   }
 
   void handleAll() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("all");
+    provider.loadCashRecords("all",selectedBookId);
   }
 
   void handleToday() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("today");
+    provider.loadCashRecords("today",selectedBookId);
   }
 
   void handleWeekly() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("weekly");
+    provider.loadCashRecords("weekly",selectedBookId);
   }
 
   void handleMonthly() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("monthly");
+    provider.loadCashRecords("monthly",selectedBookId);
   }
 
   void handleYearly() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("yearly");
+    provider.loadCashRecords("yearly",selectedBookId);
   }
 
   Future<void> _pickDate() async {
@@ -95,74 +103,93 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openCashbookDialog() async {
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) {
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+
+    // Trigger loading before showing dialog
+    provider.loadBooks();
+
+    final result = await showDialog<Book>(
+     context: context,
+     builder: (context) {
         return AlertDialog(
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.zero, // 👈 removes rounded corners
+            borderRadius: BorderRadius.zero,
           ),
           title: const Text('Select Cashbook'),
           content: SizedBox(
             width: double.maxFinite,
             height: 250,
-            child: Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _cashbooks.length,
-                    itemBuilder: (context, index) {
-                      final name = _cashbooks[index];
-                      return ListTile(
-                        title: Text(name),
-                        trailing: name == _selectedCashbook
-                            ? const Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          Navigator.pop(context, name);
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Consumer<CashRecordProvider>(
+              builder: (context, provider, _) {
+                if (provider.isLoading) {
+                  // 🔄 Show loader while fetching
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (provider.books.isEmpty) {
+                  return const Center(child: Text('No cashbooks found'));
+                }
+
+                return Column(
                   children: [
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // handle add existing
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Add tapped")),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add New'),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: provider.books.length,
+                        itemBuilder: (context, index) {
+                          final name = provider.books[index].name;
+                          return ListTile(
+                            title: Text(name),
+                            trailing: provider.books[index].isSelected
+                                ? const Icon(Icons.check, color: Colors.blue)
+                                : null,
+                            onTap: () {
+                              Navigator.pop(context, provider.books[index]);
+                            },
+                          );
+                        },
+                      ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // handle create new
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Create tapped")),
-                        );
-                      },
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit'),
-                    ),
+                    const Divider(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Add tapped")),
+                            );
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add New'),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Edit tapped")),
+                            );
+                          },
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Edit'),
+                        ),
+                      ],
+                    )
                   ],
-                )
-              ],
+                );
+              },
             ),
           ),
         );
       },
     );
 
-    if (result != null && result.isNotEmpty) {
-      setState(() {
-        _selectedCashbook = result;
-      });
-    }
+    if (result != null) {
+    setState(() {
+      _selectedCashbook = result.name;
+    });
+    selectedBookId = result.id!;
+    await provider.setSelectedBook(result.id!);
+    provider.loadCashRecords('all', selectedBookId);
+  }
   }
 
   void _onReport() {
@@ -177,26 +204,6 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('Add tapped'),
     ));
-  }
-
-  Future<void> _loadRecords() async {
-    final records  = await DatabaseHelper.instance.getAllCashRecords();
-    //records.sort((a, b) => a.date.compareTo(b.date));
-    // 3. Calculate balances
-    double runningBalance = 0;
-    List<CashRecord> updated = [];
-
-    for (var r in records) {
-      if (r.isCashOut) {
-        runningBalance -= r.amount;
-      } else {
-        runningBalance += r.amount;
-      }
-      updated.add(r.copyWithBalance(runningBalance));
-    }
-    setState(() {
-      cashRecords = updated.reversed.toList();
-    });
   }
 
   void _onMenuSelected(String value) {
@@ -332,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) =>  CashInOutScreen(isCashOut: record.isCashOut, cashRecord: record)),
+                            MaterialPageRoute(builder: (context) =>  CashInOutScreen(isCashOut: record.isCashOut, cashRecord: record, bookId: selectedBookId,)),
                           );
                         },
                     child:  Container(
@@ -427,7 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const CashInOutScreen(isCashOut: false)),
+                        MaterialPageRoute(builder: (context) =>  CashInOutScreen(isCashOut: false, bookId: selectedBookId,)),
                       );
                     },
                     child: const Text(
@@ -453,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const CashInOutScreen(isCashOut: true)),
+                        MaterialPageRoute(builder: (context) =>  CashInOutScreen(isCashOut: true, bookId: selectedBookId)),
                       );
                     },
                     child: const Text(

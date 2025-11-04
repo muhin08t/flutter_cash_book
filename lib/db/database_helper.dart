@@ -25,8 +25,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -35,7 +36,8 @@ class DatabaseHelper {
         CREATE TABLE $tableBooks (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          isSelected INTEGER DEFAULT 0
         )
       ''');
 
@@ -50,19 +52,30 @@ class DatabaseHelper {
         FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.insert(tableBooks, {'name': 'Personal', 'isSelected': 1});
+    await db.insert(tableBooks, {'name': 'Business', 'isSelected': 0});
   }
 
-  // Future<int> insertCashRecord(double amount, String note, bool isCashOut) async {
-  //   final db = await instance.database;
-  //   return await db.insert(tableCashRecord, {
-  //     'amount': amount,
-  //     'note': note,
-  //     'isCashOut': isCashOut ? 1 : 0,
-  //     'date': DateTime.now().toIso8601String(),
-  //   });
-  // }
+  Future _upgradeDB (db, oldVersion, newVersion) async {
+  // Check if books table exists
+  final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='books'");
+  if (tables.isEmpty) {
+  await db.execute('''
+      CREATE TABLE $tableBooks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        isSelected INTEGER DEFAULT 0
+      )
+    ''');
 
-  Future<int> insertBook(Book book) async {
+  await db.insert(tableBooks, {'name': 'Personal', 'isSelected': 1});
+  await db.insert(tableBooks, {'name': 'Business', 'isSelected': 0});
+  }
+}
+
+Future<int> insertBook(Book book) async {
     final db = await instance.database;
     return await db.insert(tableBooks, book.toMap());
   }
@@ -73,6 +86,28 @@ class DatabaseHelper {
     return result.map((e) => Book.fromMap(e)).toList();
   }
 
+  Future<Book?> getSelectedBook() async {
+    final db = await instance.database;
+    final result = await db.query(
+      tableBooks,
+      where: 'isSelected = ?',
+      whereArgs: [1],
+    );
+    if (result.isNotEmpty) return Book.fromMap(result.first);
+    return null;
+  }
+
+  // Select one book and unselect others
+  Future<void> setSelectedBook(int bookId) async {
+    final db = await instance.database;
+    await db.update(tableBooks, {'isSelected': 0}); // Unselect all
+    await db.update(
+      tableBooks,
+      {'isSelected': 1},
+      where: 'id = ?',
+      whereArgs: [bookId],
+    );
+  }
 
   // Insert record
   Future<int> insertCashRecord(CashRecord record) async {
@@ -111,9 +146,14 @@ class DatabaseHelper {
   }
 
   // Read all records
-  Future<List<CashRecord>> getAllCashRecords() async {
+  Future<List<CashRecord>> getAllCashRecords(int bookId) async {
     final db = await instance.database;
-    final result = await db.query(tableCashRecord, orderBy: "date ASC");
+    final result = await db.query(
+      tableCashRecord,
+      where: 'book_id = ?',
+      whereArgs: [bookId], // pass your selected book ID here
+      orderBy: 'date ASC',
+    );
     return result.map((map) => CashRecord.fromMap(map)).toList();
   }
 

@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (_) => CashRecordProvider()..loadCashRecords("all"), // auto load on start
+      create: (_) => CashRecordProvider(), // auto load on start
       child: MyApp(),
     ),
   );
