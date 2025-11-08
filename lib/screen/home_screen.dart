@@ -6,6 +6,7 @@ import '../db/database_helper.dart';
 import '../model/book.dart';
 import '../model/cash_record.dart';
 import '../provider/cash_record_provider.dart';
+import 'book_list_screen.dart';
 import 'cash_in_out_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -28,19 +29,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     buttonData = [
-      {"text": "All", "action": handleAll },
-      {"text": "Today", "action": handleToday },
+      {"text": "All", "action": handleAll},
+      {"text": "Today", "action": handleToday},
       {"text": "Weekly", "action": handleWeekly},
-      {"text": "Monthly", "action": handleMonthly },
-      {"text": "Yearly", "action": handleYearly },
-      {"text": "Single Day", "action": _pickDate },
+      {"text": "Monthly", "action": handleMonthly},
+      {"text": "Yearly", "action": handleYearly},
+      {"text": "Single Day", "action": _pickDate},
       {"text": "Date range", "action": _pickDateRange},
     ];
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final cashRecordProvider = Provider.of<CashRecordProvider>(context, listen: false);
+      final cashRecordProvider =
+          Provider.of<CashRecordProvider>(context, listen: false);
       await cashRecordProvider.loadSelectedBook();
-      _selectedCashbook = cashRecordProvider.selectedBook!.name;
+      setState(() {
+        _selectedCashbook = cashRecordProvider.selectedBook!.name;
+      });
       selectedBookId = cashRecordProvider.selectedBook!.id!;
       await cashRecordProvider.loadCashRecords('all', selectedBookId);
     });
@@ -48,27 +52,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void handleAll() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("all",selectedBookId);
+    provider.loadCashRecords("all", selectedBookId);
   }
 
   void handleToday() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("today",selectedBookId);
+    provider.loadCashRecords("today", selectedBookId);
   }
 
   void handleWeekly() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("weekly",selectedBookId);
+    provider.loadCashRecords("weekly", selectedBookId);
   }
 
   void handleMonthly() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("monthly",selectedBookId);
+    provider.loadCashRecords("monthly", selectedBookId);
   }
 
   void handleYearly() {
     final provider = Provider.of<CashRecordProvider>(context, listen: false);
-    provider.loadCashRecords("yearly",selectedBookId);
+    provider.loadCashRecords("yearly", selectedBookId);
   }
 
   Future<void> _pickDate() async {
@@ -81,10 +85,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (!mounted || picked == null) return;
-      selectedDate = picked;
-      final provider = Provider.of<CashRecordProvider>(context, listen: false);
-      provider.loadSingleDateRecord(selectedDate);
-
+    selectedDate = picked;
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    provider.loadSingleDateRecord(selectedDate, selectedBookId);
   }
 
   Future<void> _pickDateRange() async {
@@ -92,14 +95,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2000), // earliest date
-      lastDate: DateTime(2100),  // latest date
+      lastDate: DateTime(2100), // latest date
       initialDateRange: selectedRange, // preselect previous range (optional)
     );
 
     if (!mounted || picked == null) return;
-      final provider = Provider.of<CashRecordProvider>(context, listen: false);
-      provider.loadRecordByDateRange(picked.start, picked.end);
-
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    provider.loadRecordByDateRange(picked.start, picked.end, selectedBookId);
   }
 
   void _openCashbookDialog() async {
@@ -109,8 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
     provider.loadBooks();
 
     final result = await showDialog<Book>(
-     context: context,
-     builder: (context) {
+      context: context,
+      builder: (context) {
         return AlertDialog(
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.zero,
@@ -155,17 +157,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         ElevatedButton.icon(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Add tapped")),
-                            );
+                             Navigator.pop(context);
+                            _showAddBookDialog(context);
                           },
                           icon: const Icon(Icons.add),
                           label: const Text('Add New'),
                         ),
                         ElevatedButton.icon(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Edit tapped")),
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => BookListScreen(
+                                  )),
                             );
                           },
                           icon: const Icon(Icons.edit),
@@ -183,14 +188,66 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (result != null) {
-    setState(() {
-      _selectedCashbook = result.name;
-    });
-    selectedBookId = result.id!;
-    await provider.setSelectedBook(result.id!);
-    provider.loadCashRecords('all', selectedBookId);
+      setState(() {
+        _selectedCashbook = result.name;
+      });
+      selectedBookId = result.id!;
+      await provider.setSelectedBook(result.id!);
+      provider.loadCashRecords('all', selectedBookId);
+    }
   }
+
+  Future<void> _showAddBookDialog(BuildContext context) async {
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    final TextEditingController controller = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text('Add New Cash Book'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'Enter book name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = controller.text.trim();
+                if (name.isNotEmpty) {
+                  Book book = Book(name: name);
+                  int id = await provider.insertBook(book);
+                  if (!context.mounted) return;
+                  if(id > 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Book inserted successfully!")),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Insert failed")),
+                    );
+                  }
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
   }
+
 
   void _onReport() {
     // handle report action
@@ -205,6 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
       content: Text('Add tapped'),
     ));
   }
+
 
   void _onMenuSelected(String value) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -229,14 +287,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   double getTotalCashIn(List<CashRecord> records) {
+    print('records length: ${records.length}');
     return records
-        .where((r) => !r.isCashOut)     // only cash in
+        .where((r) => !r.isCashOut) // only cash in
         .fold(0, (sum, r) => sum + r.amount);
   }
 
   double getTotalCashOut(List<CashRecord> records) {
     return records
-        .where((r) => r.isCashOut)      // only cash out
+        .where((r) => r.isCashOut) // only cash out
         .fold(0, (sum, r) => sum + r.amount);
   }
 
@@ -273,7 +332,9 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'Add',
             icon: const Icon(Icons.add),
-            onPressed: _onAdd,
+            onPressed: () {
+              _showAddBookDialog(context);
+            },
           ),
           PopupMenuButton<String>(
             onSelected: _onMenuSelected,
@@ -302,7 +363,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     .toList(),
               ),
             ),
-      ),
+          ),
 
           // Header row
           Container(
@@ -310,9 +371,24 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.grey.shade200,
             child: Row(
               children: const [
-                Expanded(flex: 2, child: Center(child: Text("Date",  style: TextStyle(color: Colors.black,  fontWeight: FontWeight.bold,)))),
-                Expanded(flex: 1, child: Center(child: Text("Cash In",  style: TextStyle(color: Colors.green)))),
-                Expanded(flex: 1, child: Center(child: Text("Cash Out",  style: TextStyle(color: Colors.red)))),
+                Expanded(
+                    flex: 2,
+                    child: Center(
+                        child: Text("Date",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            )))),
+                Expanded(
+                    flex: 1,
+                    child: Center(
+                        child: Text("Cash In",
+                            style: TextStyle(color: Colors.green)))),
+                Expanded(
+                    flex: 1,
+                    child: Center(
+                        child: Text("Cash Out",
+                            style: TextStyle(color: Colors.red)))),
               ],
             ),
           ),
@@ -327,6 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
 
                 final records = provider.records;
+                cashRecords = List.from(provider.records);
                 return ListView.builder(
                   itemCount: records.length,
                   itemBuilder: (context, index) {
@@ -334,78 +411,84 @@ class _HomeScreenState extends State<HomeScreen> {
                     final record = records[index];
                     final dateTime = record.date;
                     final formattedDate =
-                    DateFormat("EEE, dd MMM yyyy hh:mm a").format(dateTime);
+                        DateFormat("EEE, dd MMM yyyy hh:mm a").format(dateTime);
                     return InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) =>  CashInOutScreen(isCashOut: record.isCashOut, cashRecord: record, bookId: selectedBookId,)),
-                          );
-                        },
-                    child:  Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom:
-                              BorderSide(color: Colors.grey.shade400, width: 1),
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  record.note ?? "", // 👈 your extra text
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                // spacing between texts
-                                Text(formattedDate),
-                                // 👈 your existing date
-                              ],
-                            ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => CashInOutScreen(
+                                    isCashOut: record.isCashOut,
+                                    cashRecord: record,
+                                    bookId: selectedBookId,
+                                  )),
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                                color: Colors.grey.shade400, width: 1),
                           ),
-                          Expanded(
-                            flex: 1,
-                            child: Center(
-                              child: Text(
-                                record.isCashOut
-                                    ? ""
-                                    : formatter.format(record.amount),
-                                style: const TextStyle(
-                                    color: Colors.green, fontSize: 16),
+                        ),
+                        padding: const EdgeInsets.all(8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    record.note ?? "", // 👈 your extra text
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // spacing between texts
+                                  Text(formattedDate),
+                                  // 👈 your existing date
+                                ],
                               ),
                             ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
+                            Expanded(
+                              flex: 1,
+                              child: Center(
+                                child: Text(
                                   record.isCashOut
-                                      ? formatter.format(record.amount)
-                                      : "",
+                                      ? ""
+                                      : formatter.format(record.amount),
                                   style: const TextStyle(
-                                      color: Colors.red, fontSize: 16),
+                                      color: Colors.green, fontSize: 16),
                                 ),
-                                const SizedBox(height: 4),
-                                // spacing between texts
-                                Text(
-                                  'Balance ${formatter.format(record.balance)}',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                // 👈 your existing date
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    record.isCashOut
+                                        ? formatter.format(record.amount)
+                                        : "",
+                                    style: const TextStyle(
+                                        color: Colors.red, fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // spacing between texts
+                                  Text(
+                                    'Balance ${formatter.format(record.balance)}',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  // 👈 your existing date
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     );
                   },
                 );
@@ -434,7 +517,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) =>  CashInOutScreen(isCashOut: false, bookId: selectedBookId,)),
+                        MaterialPageRoute(
+                            builder: (context) => CashInOutScreen(
+                                  isCashOut: false,
+                                  bookId: selectedBookId,
+                                )),
                       );
                     },
                     child: const Text(
@@ -460,7 +547,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) =>  CashInOutScreen(isCashOut: true, bookId: selectedBookId)),
+                        MaterialPageRoute(
+                            builder: (context) => CashInOutScreen(
+                                isCashOut: true, bookId: selectedBookId)),
                       );
                     },
                     child: const Text(
@@ -479,74 +568,96 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Row with 3 cells
           Padding(
-          padding: const EdgeInsets.all(4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // centers vertically
-                    crossAxisAlignment: CrossAxisAlignment.center, // centers horizontally
-                    children:  [
-                      Text("Total Cash In", style: TextStyle(color: Colors.green)),
-                      SizedBox(height: 4), // small spacing
-                      Text(formatter.format(getTotalCashIn(cashRecords)), style: TextStyle(color: Colors.green)), // your new text
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: Colors.black, width: 1),
-                      bottom: BorderSide(color: Colors.black, width: 1),
-                      right: BorderSide(color: Colors.black, width: 1),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // centers vertically
-                    crossAxisAlignment: CrossAxisAlignment.center, // centers horizontally
-                    children:  [
-                      Text("Total Cash Out", style: TextStyle(color: Colors.red)),
-                      SizedBox(height: 4), // small spacing
-                      Text(formatter.format(getTotalCashOut(cashRecords)), style: TextStyle(color: Colors.red)), // your new text
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: Colors.black, width: 1),
-                      bottom: BorderSide(color: Colors.black, width: 1),
-                      right: BorderSide(color: Colors.black, width: 1),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // centers vertically
-                    crossAxisAlignment: CrossAxisAlignment.center, // centers horizontally
-                    children: [
-                      Text("Balance"),
-                      SizedBox(height: 4), // small spacing
-                      Text(formatter.format(getBalance(cashRecords)),
-                        style: TextStyle(
-                          color: getBalance(cashRecords) < 0 ? Colors.red : Colors.green,
+            padding: const EdgeInsets.all(4),
+            child: Consumer<CashRecordProvider>(
+              builder: (context, provider, child) {
+                final totalCashIn = getTotalCashIn(provider.records);
+                final totalCashOut = getTotalCashOut(provider.records);
+                final totalBalance = totalCashIn - totalCashOut;
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 60,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black, width: 1),
                         ),
-                      ),// your new text
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+                        child: Column(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // centers vertically
+                          crossAxisAlignment:
+                              CrossAxisAlignment.center, // centers horizontally
+                          children: [
+                            Text("Total Cash In",
+                                style: TextStyle(color: Colors.green)),
+                            SizedBox(height: 4), // small spacing
+                            Text(formatter.format(totalCashIn),
+                                style: TextStyle(
+                                    color: Colors.green)), // your new text
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 60,
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(color: Colors.black, width: 1),
+                            bottom: BorderSide(color: Colors.black, width: 1),
+                            right: BorderSide(color: Colors.black, width: 1),
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // centers vertically
+                          crossAxisAlignment:
+                              CrossAxisAlignment.center, // centers horizontally
+                          children: [
+                            Text("Total Cash Out",
+                                style: TextStyle(color: Colors.red)),
+                            SizedBox(height: 4), // small spacing
+                            Text(formatter.format(totalCashOut),
+                                style: TextStyle(
+                                    color: Colors.red)), // your new text
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 60,
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(color: Colors.black, width: 1),
+                            bottom: BorderSide(color: Colors.black, width: 1),
+                            right: BorderSide(color: Colors.black, width: 1),
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // centers vertically
+                          crossAxisAlignment:
+                              CrossAxisAlignment.center, // centers horizontally
+                          children: [
+                            Text("Balance"),
+                            SizedBox(height: 4), // small spacing
+                            Text(
+                              formatter.format(totalBalance),
+                              style: TextStyle(
+                                color: getBalance(cashRecords) < 0
+                                    ? Colors.red
+                                    : Colors.green,
+                              ),
+                            ), // your new text
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),

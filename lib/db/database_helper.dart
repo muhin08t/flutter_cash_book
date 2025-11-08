@@ -80,6 +80,25 @@ Future<int> insertBook(Book book) async {
     return await db.insert(tableBooks, book.toMap());
   }
 
+  Future<int> updateBook(Book book) async {
+    final db = await instance.database;
+    return await db.update(
+      tableBooks,
+      book.toMap(),
+      where: 'id = ?',
+      whereArgs: [book.id],
+    );
+  }
+
+  Future<int> deleteBook(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      tableBooks,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<List<Book>> getBooks() async {
     final db = await instance.database;
     final result = await db.query(tableBooks, orderBy: 'id DESC');
@@ -115,17 +134,6 @@ Future<int> insertBook(Book book) async {
     return await db.insert(tableCashRecord, record.toMap());
   }
 
-  Future<List<CashRecord>> getRecordsByBook(int bookId) async {
-    final db = await instance.database;
-    final result = await db.query(
-      tableCashRecord,
-      where: 'book_id = ?',
-      whereArgs: [bookId],
-      orderBy: 'date DESC',
-    );
-    return result.map((e) => CashRecord.fromMap(e)).toList();
-  }
-
   Future<int> updateRecord(CashRecord record) async {
     final db = await instance.database;
     return await db.update(
@@ -157,32 +165,32 @@ Future<int> insertBook(Book book) async {
     return result.map((map) => CashRecord.fromMap(map)).toList();
   }
 
-  Future<List<CashRecord>>  getTodayRecords() async {
+  Future<List<CashRecord>>  getTodayRecords(int bookId) async {
     final db = await instance.database;
     final result = await db.rawQuery('''
     SELECT * FROM $tableCashRecord
-    WHERE date(date) = date('now', 'localtime')
+    WHERE date(date) = date('now', 'localtime')  AND book_id = ?
     ORDER BY date DESC
-  ''');
+  ''', [bookId]);
     return result.map((map) => CashRecord.fromMap(map)).toList();
   }
 
-  Future<List<CashRecord>> getRecordsByDate(DateTime date) async {
+  Future<List<CashRecord>> getRecordsByDate(DateTime date, int bookId) async {
     final db = await instance.database;
     // Format date to 'YYYY-MM-DD' (SQLite date format)
     final formattedDate = date.toIso8601String().split('T').first;
 
     final result = await db.rawQuery('''
     SELECT * FROM $tableCashRecord
-    WHERE date(date) = ?
+    WHERE date(date) = ? AND book_id = ?
     ORDER BY date DESC
-  ''', [formattedDate]);
+  ''', [formattedDate, bookId]);
 
     return result.map((map) => CashRecord.fromMap(map)).toList();
   }
 
   Future<List<CashRecord>> getRecordsByDateRange(
-      DateTime startDate, DateTime endDate) async {
+      DateTime startDate, DateTime endDate, int bookId) async {
     final db = await instance.database;
 
     // Format dates as 'YYYY-MM-DD'
@@ -191,40 +199,43 @@ Future<int> insertBook(Book book) async {
 
     final result = await db.rawQuery('''
     SELECT * FROM $tableCashRecord
-    WHERE date(date) BETWEEN ? AND ?
+    WHERE date(date) BETWEEN ? AND ? AND book_id = ?
     ORDER BY date DESC
-  ''', [start, end]);
+  ''', [start, end, bookId]);
 
     return result.map((map) => CashRecord.fromMap(map)).toList();
   }
 
-  Future<List<CashRecord>> getLast7DaysCashRecords() async {
+  Future<List<CashRecord>> getLast7DaysCashRecords(int bookId) async {
     final db = await instance.database;
     final result = await db.rawQuery('''
     SELECT *
     FROM $tableCashRecord
     WHERE date(date) >= date('now', '-6 days', 'localtime')
-  ''');
+    AND book_id = ?
+  ''', [bookId]);
     return result.map((e) => CashRecord.fromMap(e)).toList();
   }
 
-  Future<List<CashRecord>> getMonthlyCashRecords() async {
+  Future<List<CashRecord>> getMonthlyCashRecords(int bookId) async {
     final db = await instance.database;
     final result = await db.rawQuery('''
     SELECT *
     FROM $tableCashRecord
     WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now', 'localtime')
-  ''');
+    AND book_id = ?
+  ''', [bookId]);
     return result.map((e) => CashRecord.fromMap(e)).toList();
   }
 
-  Future<List<CashRecord>> getYearlyCashRecords() async {
+  Future<List<CashRecord>> getYearlyCashRecords(int bookId) async {
     final db = await instance.database;
     final result = await db.rawQuery('''
     SELECT *
     FROM $tableCashRecord
     WHERE strftime('%Y', date) = strftime('%Y', 'now', 'localtime')
-  ''');
+    AND book_id = ?
+  ''', [bookId]);
     return result.map((e) => CashRecord.fromMap(e)).toList();
   }
 

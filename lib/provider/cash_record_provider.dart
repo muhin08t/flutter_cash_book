@@ -24,16 +24,16 @@ class CashRecordProvider extends ChangeNotifier {
         fetchedData = await DatabaseHelper.instance.getAllCashRecords(bookId);
         break;
       case 'today':
-        fetchedData = await DatabaseHelper.instance.getTodayRecords();
+        fetchedData = await DatabaseHelper.instance.getTodayRecords(bookId);
         break;
       case 'weekly':
-        fetchedData = await DatabaseHelper.instance.getLast7DaysCashRecords();
+        fetchedData = await DatabaseHelper.instance.getLast7DaysCashRecords(bookId);
         break;
       case 'monthly':
-        fetchedData = await DatabaseHelper.instance.getMonthlyCashRecords();
+        fetchedData = await DatabaseHelper.instance.getMonthlyCashRecords(bookId);
         break;
       case 'yearly':
-        fetchedData = await DatabaseHelper.instance.getYearlyCashRecords();
+        fetchedData = await DatabaseHelper.instance.getYearlyCashRecords(bookId);
         break;
       default:
         fetchedData = await DatabaseHelper.instance.getAllCashRecords(bookId);
@@ -45,12 +45,12 @@ class CashRecordProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadSingleDateRecord(DateTime dateTime) async {
+  Future<void> loadSingleDateRecord(DateTime dateTime, int bookId) async {
     isLoading = true;
     _records.clear();
     notifyListeners();
     List<CashRecord> fetchedData = [];
-    fetchedData = await DatabaseHelper.instance.getRecordsByDate(dateTime);
+    fetchedData = await DatabaseHelper.instance.getRecordsByDate(dateTime, bookId);
 
     _records = calculateRunningBalance(fetchedData);
     isLoading = false;
@@ -58,12 +58,12 @@ class CashRecordProvider extends ChangeNotifier {
   }
 
   Future<void> loadRecordByDateRange(DateTime startDateTime,
-      DateTime endDateTime) async {
+      DateTime endDateTime, int bookId) async {
     isLoading = true;
     _records.clear();
     notifyListeners();
     List<CashRecord> fetchedData = [];
-    fetchedData = await DatabaseHelper.instance.getRecordsByDateRange(startDateTime, endDateTime);
+    fetchedData = await DatabaseHelper.instance.getRecordsByDateRange(startDateTime, endDateTime, bookId);
 
     _records = calculateRunningBalance(fetchedData);
     isLoading = false;
@@ -100,6 +100,23 @@ class CashRecordProvider extends ChangeNotifier {
     int idd =  await DatabaseHelper.instance.deleteRecord(id);
     await loadCashRecords("all",bookId); // reload after insert
     return idd;
+  }
+
+  Future<int> insertBook(Book book) async {
+    int id =  await DatabaseHelper.instance.insertBook(book);
+    return id;
+  }
+
+  Future<int> deleteBook(int id) async {
+    int idd =  await DatabaseHelper.instance.deleteBook(id);
+    loadBooks();
+    return idd;
+  }
+
+  Future<int> updateBook(Book book) async {
+    int id = await DatabaseHelper.instance.updateBook(book);
+    loadBooks();
+    return id;
   }
 
   Future<void> loadBooks() async {
