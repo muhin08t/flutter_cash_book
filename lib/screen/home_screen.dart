@@ -135,10 +135,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 return Column(
                   children: [
                     Expanded(
-                      child: ListView.builder(
+                      child:  ListView.separated(
                         itemCount: provider.books.length,
+                        separatorBuilder: (context, index) => Container(
+                          height: 1,
+                          color: Colors.grey, // 👈 divider color
+                        ),
+
                         itemBuilder: (context, index) {
                           final name = provider.books[index].name;
+
                           return ListTile(
                             title: Text(name),
                             trailing: provider.books[index].isSelected
@@ -151,6 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                     ),
+
                     const Divider(),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -287,7 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   double getTotalCashIn(List<CashRecord> records) {
-    print('records length: ${records.length}');
     return records
         .where((r) => !r.isCashOut) // only cash in
         .fold(0, (sum, r) => sum + r.amount);
@@ -334,6 +340,18 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.add),
             onPressed: () {
               _showAddBookDialog(context);
+            },
+          ),
+          IconButton(
+            tooltip: 'Book list',
+            icon: const Icon(Icons.menu_book), // 📘 Cashbook icon
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => BookListScreen(
+                    )),
+              );
             },
           ),
           PopupMenuButton<String>(

@@ -138,7 +138,7 @@ class _BookListScreenState extends State<BookListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cash Books'),
+        title: const Text('Cash Book List'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
