@@ -258,9 +258,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onReport() {
     // handle report action
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Report tapped'),
-    ));
+    // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    //   content: Text('Report tapped'),
+    // ));
+    final now = DateTime.now();
+    String month = DateFormat('MMMM yyyy').format(now);
+    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    provider.generateCashbookReport(bookName: 'book of', dateRange: month, context: context);
   }
 
   void _onAdd() {

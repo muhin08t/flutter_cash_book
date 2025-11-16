@@ -1,8 +1,16 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_cash_book/model/book.dart';
+import 'package:path/path.dart';
+import 'package:pdf/pdf.dart';
 
 import '../db/database_helper.dart';
 import '../model/cash_record.dart';
+import 'dart:io';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:path_provider/path_provider.dart';
 
 class CashRecordProvider extends ChangeNotifier {
   List<CashRecord> _records = [];
@@ -136,4 +144,123 @@ class CashRecordProvider extends ChangeNotifier {
     _selectedBook =  await DatabaseHelper.instance.getSelectedBook();
     notifyListeners();
   }
+
+  Future<void> generateCashbookReport({
+    required String bookName,
+    required String dateRange,
+    required BuildContext context,
+  }) async {
+    final pdf = pw.Document();
+
+    // Create table data
+    final tableData = records.map((record) {
+      final cashIn = record.isCashOut ? 0.0 : record.amount;
+      final cashOut = record.isCashOut ? record.amount : 0.0;
+
+      return [
+        _formatDate(record.date),
+        record.note ?? '',
+        cashIn == 0 ? '' : cashIn.toStringAsFixed(2),
+        cashOut == 0 ? '' : cashOut.toStringAsFixed(2),
+        record.balance.toStringAsFixed(2),
+      ];
+    }).toList();
+
+    // Build the PDF
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(20),
+        build: (context) => [
+          // Header section
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Center(
+                child: pw.Text(
+                  'Cashbook Report',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Text(
+                'Book Name: $bookName',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.Text('Date Range: $dateRange',
+                  style: pw.TextStyle(fontSize: 14)),
+              pw.SizedBox(height: 15),
+            ],
+          ),
+
+          // Data table
+          pw.Table.fromTextArray(
+            headers: ['Date', 'Notes', 'Cash In', 'Cash Out', 'Balance'],
+            data: tableData,
+            border: pw.TableBorder.all(width: 0.5),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
+            ),
+            headerDecoration: pw.BoxDecoration(color: PdfColors.blueGrey900),
+            cellStyle: pw.TextStyle(fontSize: 10),
+            cellAlignment: pw.Alignment.centerLeft,
+            headerAlignment: pw.Alignment.center,
+          ),
+
+          pw.SizedBox(height: 20),
+
+          // Summary footer
+          pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Final Balance: ${records.isNotEmpty ? records.last.balance.toStringAsFixed(2) : '0.00'}',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // OPEN PDF INSIDE APP (No save dialog)
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdfPreview(
+          build: (format) => pdf.save(),
+          pdfFileName: "cashbook_report.pdf",
+        ),
+      ),
+    );
+
+  }
+
+// Helper: Format date (YYYY-MM-DD)
+  String _formatDate(DateTime date) {
+    return '${date.year}-${_twoDigits(date.month)}-${_twoDigits(date.day)}';
+  }
+
+  String getDateRange(List<CashRecord> records) {
+    if (records.isEmpty) return 'No data';
+
+    // Sort by date (just to be sure)
+    records.sort((a, b) => a.date.compareTo(b.date));
+
+    final start = records.first.date;
+    final end = records.last.date;
+
+    return '${_formatDate(start)} - ${_formatDate(end)}';
+  }
+
+  String _twoDigits(int n) => n.toString().padLeft(2, '0');
+
 }
