@@ -17,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late CashRecordProvider provider;
   String _selectedCashbook = 'select book';
   int selectedBookId = 1;
   final List<String> _cashbooks = ['Personal', 'Business', 'Savings'];
@@ -39,39 +40,33 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final cashRecordProvider =
-          Provider.of<CashRecordProvider>(context, listen: false);
-      await cashRecordProvider.loadSelectedBook();
+      provider = Provider.of<CashRecordProvider>(context, listen: false);
+      await provider.loadSelectedBook();
       setState(() {
-        _selectedCashbook = cashRecordProvider.selectedBook!.name;
+        _selectedCashbook = provider.selectedBook!.name;
       });
-      selectedBookId = cashRecordProvider.selectedBook!.id!;
-      await cashRecordProvider.loadCashRecords('all', selectedBookId);
+      selectedBookId = provider.selectedBook!.id!;
+      await provider.loadCashRecords('all', selectedBookId);
     });
   }
 
   void handleAll() {
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("all", selectedBookId);
   }
 
   void handleToday() {
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("today", selectedBookId);
   }
 
   void handleWeekly() {
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("weekly", selectedBookId);
   }
 
   void handleMonthly() {
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("monthly", selectedBookId);
   }
 
   void handleYearly() {
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadCashRecords("yearly", selectedBookId);
   }
 
@@ -86,7 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!mounted || picked == null) return;
     selectedDate = picked;
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadSingleDateRecord(selectedDate, selectedBookId);
   }
 
@@ -100,12 +94,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (!mounted || picked == null) return;
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.loadRecordByDateRange(picked.start, picked.end, selectedBookId);
   }
 
   void _openCashbookDialog() async {
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
+    // final provider = Provider.of<CashRecordProvider>(context, listen: false);
 
     // Trigger loading before showing dialog
     provider.loadBooks();
@@ -205,7 +198,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _showAddBookDialog(BuildContext context) async {
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     final TextEditingController controller = TextEditingController();
 
     await showDialog(
@@ -263,7 +255,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // ));
     final now = DateTime.now();
     String month = DateFormat('MMMM yyyy').format(now);
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     provider.generateCashbookReport(bookName: 'book of', dateRange: month, context: context);
   }
 

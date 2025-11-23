@@ -32,6 +32,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # Symbolication related
 app.*.symbols

@@ -13,12 +13,15 @@ class BookListScreen extends StatefulWidget {
 
 class _BookListScreenState extends State<BookListScreen> {
 
+  late CashRecordProvider provider;
+
   @override
   void initState() {
     super.initState();
     // load once when the screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CashRecordProvider>(context, listen: false).loadBooks();
+      provider = Provider.of<CashRecordProvider>(context, listen: false);
+      provider.loadBooks();
     });
   }
 
@@ -43,7 +46,6 @@ class _BookListScreenState extends State<BookListScreen> {
     );
 
     if (newName != null && newName.isNotEmpty) {
-      final provider = Provider.of<CashRecordProvider>(context, listen: false);
       Book updatedBook = book.copyWith(name: newName);
       int id = await provider.updateBook(updatedBook);
       if (!context.mounted) return;
@@ -78,7 +80,6 @@ class _BookListScreenState extends State<BookListScreen> {
     );
 
     if (confirm == true) {
-      final provider = Provider.of<CashRecordProvider>(context, listen: false);
       int id = await provider.deleteBook(book.id!);
       if (!context.mounted) return;
 
@@ -97,7 +98,6 @@ class _BookListScreenState extends State<BookListScreen> {
   }
 
   void _addBook(BuildContext context) async {
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     TextEditingController controller = TextEditingController();
 
     final name = await showDialog<String>(

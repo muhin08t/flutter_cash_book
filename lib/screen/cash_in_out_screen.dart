@@ -26,10 +26,12 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
   late TimeOfDay selectedTime;
   late TextEditingController amountController;
   late TextEditingController notesController;
+  late CashRecordProvider provider;
 
   @override
   void initState() {
     super.initState();
+    provider = Provider.of<CashRecordProvider>(context, listen: false);
     isCashOut = widget.isCashOut; // 👈 initialize from constructor
     selectedBookId = widget.bookId;
     // If record is null -> new entry, else fill with existing
@@ -113,7 +115,6 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
 
     final amount = double.tryParse(amountController.text);
     if (amount == null) return;
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     final record = CashRecord(
       amount: amount,
       bookId: selectedBookId,
@@ -156,7 +157,6 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
 
     final amount = double.tryParse(amountController.text);
     if (amount == null) return;
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     final record = CashRecord(
       id: widget.cashRecord?.id,
       bookId: selectedBookId,
@@ -185,7 +185,6 @@ class _CashInOutScreenState extends State<CashInOutScreen> {
   }
 
   Future<void> _deleteRecord(BuildContext context) async {
-    final provider = Provider.of<CashRecordProvider>(context, listen: false);
     int id = await provider.deleteRecord(widget.cashRecord!.id!, widget.cashRecord!.bookId);
     if (!context.mounted) return;
 
