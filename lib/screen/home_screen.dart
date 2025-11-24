@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import '../db/database_helper.dart';
 import '../model/book.dart';
 import '../model/cash_record.dart';
 import '../provider/cash_record_provider.dart';
+import '../utils/cash_utils.dart';
+import '../utils/pdf_utils.dart';
 import 'book_list_screen.dart';
 import 'cash_in_out_screen.dart';
 
@@ -95,6 +98,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!mounted || picked == null) return;
     provider.loadRecordByDateRange(picked.start, picked.end, selectedBookId);
+  }
+
+  void _openCashbookPDF(String bookName,
+       String dateRange) async {
+    final pdfBytes = await PdfUtils.generateCashbookReport(
+      bookName: bookName,
+      dateRange: dateRange,
+      records: provider.records,
+    );
+    if(!mounted) return null;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdfPreview(
+          build: (format) => Future.value(pdfBytes),
+          pdfFileName: "cashbook_report.pdf",
+        ),
+      ),
+    );
   }
 
   void _openCashbookDialog() async {
@@ -255,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // ));
     final now = DateTime.now();
     String month = DateFormat('MMMM yyyy').format(now);
-    provider.generateCashbookReport(bookName: 'book of', dateRange: month, context: context);
+     _openCashbookPDF('book of', month);
   }
 
   void _onAdd() {
@@ -286,22 +309,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Text(text),
       ),
     );
-  }
-
-  double getTotalCashIn(List<CashRecord> records) {
-    return records
-        .where((r) => !r.isCashOut) // only cash in
-        .fold(0, (sum, r) => sum + r.amount);
-  }
-
-  double getTotalCashOut(List<CashRecord> records) {
-    return records
-        .where((r) => r.isCashOut) // only cash out
-        .fold(0, (sum, r) => sum + r.amount);
-  }
-
-  double getBalance(List<CashRecord> records) {
-    return getTotalCashIn(records) - getTotalCashOut(records);
   }
 
   @override
@@ -584,8 +591,8 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(4),
             child: Consumer<CashRecordProvider>(
               builder: (context, provider, child) {
-                final totalCashIn = getTotalCashIn(provider.records);
-                final totalCashOut = getTotalCashOut(provider.records);
+                final totalCashIn = CashUtils.getTotalCashIn(provider.records);
+                final totalCashOut = CashUtils.getTotalCashOut(provider.records);
                 final totalBalance = totalCashIn - totalCashOut;
                 return Row(
                   children: [
@@ -658,7 +665,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               formatter.format(totalBalance),
                               style: TextStyle(
-                                color: getBalance(cashRecords) < 0
+                                color: CashUtils.getBalance(cashRecords) < 0
                                     ? Colors.red
                                     : Colors.green,
                               ),
