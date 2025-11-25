@@ -12,6 +12,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../utils/cash_utils.dart';
+
 class CashRecordProvider extends ChangeNotifier {
   List<CashRecord> _records = [];
   List<Book> _books = [];
@@ -48,7 +50,7 @@ class CashRecordProvider extends ChangeNotifier {
         break;
     }
 
-    _records = calculateRunningBalance(fetchedData);
+    _records = CashUtils.calculateRunningBalance(fetchedData);
     isLoading = false;
     notifyListeners();
   }
@@ -60,7 +62,7 @@ class CashRecordProvider extends ChangeNotifier {
     List<CashRecord> fetchedData = [];
     fetchedData = await DatabaseHelper.instance.getRecordsByDate(dateTime, bookId);
 
-    _records = calculateRunningBalance(fetchedData);
+    _records = CashUtils.calculateRunningBalance(fetchedData);
     isLoading = false;
     notifyListeners();
   }
@@ -73,24 +75,10 @@ class CashRecordProvider extends ChangeNotifier {
     List<CashRecord> fetchedData = [];
     fetchedData = await DatabaseHelper.instance.getRecordsByDateRange(startDateTime, endDateTime, bookId);
 
-    _records = calculateRunningBalance(fetchedData);
+    _records = CashUtils.calculateRunningBalance(fetchedData);
     isLoading = false;
     notifyListeners();
   }
-
-  List<CashRecord> calculateRunningBalance(List<CashRecord> fetchedData) {
-    double runningBalance = 0;
-    List<CashRecord> updatedData = [];
-
-    for (var r in fetchedData) {
-      runningBalance += r.isCashOut ? -r.amount : r.amount;
-      updatedData.add(r.copyWithBalance(runningBalance));
-    }
-
-    // Reverse if you want newest first
-    return updatedData.reversed.toList();
-  }
-
 
   Future<int> insertRecord(CashRecord record) async {
     int id =  await DatabaseHelper.instance.insertCashRecord(record);

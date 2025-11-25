@@ -3,6 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../model/cash_record.dart';
+import 'cash_utils.dart';
 
 class PdfUtils {
   static Future<Uint8List> generateCashbookReport({
@@ -42,8 +43,8 @@ class PdfUtils {
           pw.SizedBox(height: 10),
           pw.Text('Book Name: $bookName',
               style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
-          pw.Text('Date Range: $dateRange',
-              style: pw.TextStyle(fontSize: 14)),
+          // pw.Text('Date Range: $dateRange',
+          //     style: pw.TextStyle(fontSize: 14)),
           pw.SizedBox(height: 15),
 
           pw.Table.fromTextArray(
@@ -65,7 +66,7 @@ class PdfUtils {
           pw.Align(
             alignment: pw.Alignment.centerRight,
             child: pw.Text(
-              'Final Balance: ${records.isNotEmpty ? records.last.balance.toStringAsFixed(2) : '0.00'}',
+              'Final Balance: ${records.isNotEmpty ? CashUtils.getBalance(records).toStringAsFixed(2) : '0.00'}',
               style: pw.TextStyle(
                 fontSize: 14,
                 fontWeight: pw.FontWeight.bold,

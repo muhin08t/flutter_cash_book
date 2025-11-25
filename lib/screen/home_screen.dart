@@ -270,15 +270,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   void _onReport() {
-    // handle report action
-    // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-    //   content: Text('Report tapped'),
-    // ));
     final now = DateTime.now();
     String month = DateFormat('MMMM yyyy').format(now);
-     _openCashbookPDF('book of', month);
+    String bookName = provider.selectedBook!.name;
+     _openCashbookPDF(bookName, month);
   }
 
   void _onAdd() {
@@ -287,7 +283,6 @@ class _HomeScreenState extends State<HomeScreen> {
       content: Text('Add tapped'),
     ));
   }
-
 
   void _onMenuSelected(String value) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
